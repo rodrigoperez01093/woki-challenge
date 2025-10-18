@@ -1,4 +1,4 @@
-import type { Reservation, Table } from '@/types';
+import type { Reservation, Table } from '@/app/types';
 import { tables } from './tables';
 
 const baseDate = '2025-10-15';

@@ -1,4 +1,4 @@
-import type { Restaurant } from '@/types';
+import type { Restaurant } from '@/app/types';
 
 export const restaurant: Restaurant = {
   id: 'REST_001',
