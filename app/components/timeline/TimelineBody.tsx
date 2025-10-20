@@ -4,15 +4,22 @@ import { useReservationStore } from '@/store/useReservationStore';
 import { GRID_WIDTH, ROW_HEIGHT } from '@/lib/constants';
 import TableRow from './TableRow';
 import { useMemo } from 'react';
+import { Reservation } from '@/types';
 
 interface TimelineBodyProps {
   zoomLevel: number;
+  onEditReservation?: (reservation: Reservation) => void;
+  onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
 }
 
 /**
  * Timeline body with table rows and reservation blocks
  */
-export default function TimelineBody({ zoomLevel }: TimelineBodyProps) {
+export default function TimelineBody({
+  zoomLevel,
+  onEditReservation,
+  onContextMenu,
+}: TimelineBodyProps) {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
   const collapsedSectorIds = useReservationStore(
@@ -57,6 +64,8 @@ export default function TimelineBody({ zoomLevel }: TimelineBodyProps) {
                   reservations={tableReservations}
                   zoomLevel={zoomLevel}
                   rowHeight={ROW_HEIGHT}
+                  onEditReservation={onEditReservation}
+                  onContextMenu={onContextMenu}
                 />
               );
             })}

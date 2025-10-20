@@ -77,11 +77,14 @@ export const useReservationStore = create<ReservationState>()(
       // Data Mutations
       // ========================================================================
 
-      addReservation: (input: CreateReservationInput) => {
+      addReservation: (input: CreateReservationInput): boolean => {
+        console.log('LLEGA', input);
         const updated = addReservationAction(get().reservations, input);
         if (updated) {
           set({ reservations: updated });
+          return true;
         }
+        return false;
       },
 
       updateReservation: (input: UpdateReservationInput) => {

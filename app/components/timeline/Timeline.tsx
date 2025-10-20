@@ -22,6 +22,9 @@ import { HEADER_HEIGHT, SIDEBAR_WIDTH, ROW_HEIGHT } from '@/lib/constants';
 import { xToTime, snapToSlot, timeToX } from '@/lib/utils/coordinateUtils';
 import { createISODateTime } from '@/lib/utils/dateUtils';
 import type { Reservation } from '@/types';
+import EditReservationModal from '../modals/EditReservationModal';
+import CreateReservationModal from '../modals/CreateReservationModal';
+import ReservationContextMenu from './ReservationContextMenu';
 
 /**
  * Main Timeline component
@@ -32,7 +35,16 @@ export default function Timeline() {
   const gridBodyRef = useRef<HTMLDivElement>(null);
   const [activeReservation, setActiveReservation] =
     useState<Reservation | null>(null);
+  const [editingReservation, setEditingReservation] =
+    useState<Reservation | null>(null);
   const [hasConflict, setHasConflict] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    reservation: Reservation;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [duplicatingReservation, setDuplicatingReservation] =
+    useState<Reservation | null>(null);
 
   // Store state
   const selectedDate = useReservationStore((state) => state.selectedDate);
@@ -258,7 +270,13 @@ export default function Timeline() {
 
           {/* Main grid area (scrollable) */}
           <div className="relative flex-1 overflow-auto" ref={gridBodyRef}>
-            <TimelineBody zoomLevel={zoomLevel} />
+            <TimelineBody
+              zoomLevel={zoomLevel}
+              onEditReservation={setEditingReservation}
+              onContextMenu={(reservation, x, y) =>
+                setContextMenu({ reservation, x, y })
+              }
+            />
             <CurrentTimeLine selectedDate={selectedDate} />
           </div>
         </div>
@@ -286,6 +304,49 @@ export default function Timeline() {
           </div>
         ) : null}
       </DragOverlay>
+      {/* Context Menu */}
+      {contextMenu && (
+        <ReservationContextMenu
+          reservation={contextMenu.reservation}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onEdit={(reservation) => {
+            setEditingReservation(reservation);
+            setContextMenu(null);
+          }}
+          onDuplicate={(reservation) => {
+            setDuplicatingReservation(reservation);
+            setContextMenu(null);
+          }}
+        />
+      )}
+      {/* Edit Reservation Modal */}
+      <EditReservationModal
+        isOpen={editingReservation !== null}
+        onClose={() => setEditingReservation(null)}
+        reservation={editingReservation}
+      />
+      {/* Create Reservation Modal (for duplicating) */}
+      <CreateReservationModal
+        isOpen={duplicatingReservation !== null}
+        onClose={() => setDuplicatingReservation(null)}
+        prefilledData={
+          duplicatingReservation
+            ? {
+                customerName: duplicatingReservation.customer.name,
+                customerPhone: duplicatingReservation.customer.phone,
+                customerEmail: duplicatingReservation.customer.email,
+                partySize: duplicatingReservation.partySize,
+                durationMinutes: duplicatingReservation.durationMinutes,
+                priority: duplicatingReservation.priority,
+                notes: duplicatingReservation.notes,
+                status: 'PENDING',
+                // Dejar tableId y startTime vacíos para que el usuario los configure
+              }
+            : undefined
+        }
+      />
     </DndContext>
   );
 }

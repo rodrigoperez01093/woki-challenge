@@ -1,38 +1,49 @@
 'use client';
 
+import { useState } from 'react';
 import DateNavigator from './DateNavigator';
 import FilterControls from './FilterControls';
 import ZoomControls from './ZoomControls';
+import CreateReservationModal from '../modals/CreateReservationModal';
 
-/**
- * Main toolbar with all controls
- */
 export default function Toolbar() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   return (
-    <div className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-      {/* New Reservation Button */}
-      <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
-        + Nueva Reserva
-      </button>
+    <>
+      <div className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
+        {/* New Reservation Button */}
+        <button
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          + Nueva Reserva
+        </button>
 
-      {/* Date Navigator */}
-      <DateNavigator />
+        {/* Date Navigator */}
+        <DateNavigator />
 
-      {/* Divider */}
-      <div className="h-6 w-px bg-gray-300" />
+        {/* Divider */}
+        <div className="h-6 w-px bg-gray-300" />
 
-      {/* Filters */}
-      <FilterControls />
+        {/* Filters */}
+        <FilterControls />
 
-      {/* Spacer */}
-      <div className="flex-1" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
-      {/* Active filters indicator */}
-      <ActiveFiltersIndicator />
+        {/* Active filters indicator */}
+        <ActiveFiltersIndicator />
 
-      {/* Zoom Controls */}
-      <ZoomControls />
-    </div>
+        {/* Zoom Controls */}
+        <ZoomControls />
+      </div>
+
+      {/* Create Reservation Modal */}
+      <CreateReservationModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+    </>
   );
 }
 

@@ -17,12 +17,16 @@ interface ReservationBlockProps {
   reservation: Reservation;
   zoomLevel: number;
   isOverlay?: boolean;
+  onEdit?: (reservation: Reservation) => void;
+  onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
 }
 
 export default function ReservationBlock({
   reservation,
   zoomLevel,
   isOverlay,
+  onEdit,
+  onContextMenu,
 }: ReservationBlockProps) {
   const selectedReservationIds = useReservationStore(
     (state) => state.selectedReservationIds
@@ -71,6 +75,31 @@ export default function ReservationBlock({
   const statusColors = STATUS_COLORS[reservation.status];
   const priorityStyles = PRIORITY_STYLES[reservation.priority];
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContextMenu?.(reservation, e.clientX, e.clientY);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger edit on left click, not when dragging
+    if (e.button === 0) {
+      onEdit?.(reservation);
+    }
+  };
+
+  // Combine listeners with our custom handlers
+  const combinedListeners = {
+    ...listeners,
+    onClick: (e: React.MouseEvent) => {
+      listeners?.onClick?.(e as any); // eslint-disable-line
+      if (!isDragging) {
+        handleClick(e);
+      }
+    },
+    onContextMenu: handleContextMenu,
+  };
+
   const style = isOverlay
     ? {
         transform: transform
@@ -102,7 +131,7 @@ export default function ReservationBlock({
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
+      {...combinedListeners}
       {...attributes}
       className={`
         flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all
@@ -111,6 +140,7 @@ export default function ReservationBlock({
         ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
         hover:shadow-md hover:-translate-y-0.5
       `}
+      onClick={() => onEdit?.(reservation)}
     >
       {/* Customer name */}
       <div className="flex items-center gap-1 text-xs font-bold">

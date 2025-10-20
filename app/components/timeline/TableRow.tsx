@@ -10,6 +10,8 @@ interface TableRowProps {
   reservations: Reservation[];
   zoomLevel: number;
   rowHeight: number;
+  onEditReservation?: (reservation: Reservation) => void;
+  onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
 }
 
 export default function TableRow({
@@ -17,6 +19,8 @@ export default function TableRow({
   reservations,
   zoomLevel,
   rowHeight,
+  onEditReservation,
+  onContextMenu,
 }: TableRowProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `table-${table.id}`,
@@ -76,6 +80,8 @@ export default function TableRow({
           key={reservation.id}
           reservation={reservation}
           zoomLevel={zoomLevel}
+          onEdit={onEditReservation}
+          onContextMenu={onContextMenu}
         />
       ))}
     </div>

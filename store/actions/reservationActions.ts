@@ -24,7 +24,6 @@ export function addReservation(
   input: CreateReservationInput
 ): Reservation[] | null {
   const endTime = calculateEndTime(input.startTime, input.durationMinutes);
-
   // Check for conflicts
   const conflict = checkConflict(
     reservations,
