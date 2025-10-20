@@ -1,0 +1,492 @@
+'use client';
+
+import { Fragment, useState, useEffect } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { useReservationStore } from '@/store/useReservationStore';
+import type { Reservation, UpdateReservationInput } from '@/types';
+import {
+  MIN_RESERVATION_DURATION,
+  MAX_RESERVATION_DURATION,
+  STATUS_LABELS,
+  PRIORITY_LABELS,
+} from '@/lib/constants';
+import { createISODateTime, formatDate } from '@/lib/utils/dateUtils';
+
+interface EditReservationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  reservation: Reservation | null;
+}
+
+export default function EditReservationModal({
+  isOpen,
+  onClose,
+  reservation,
+}: EditReservationModalProps) {
+  const tables = useReservationStore((state) => state.tables);
+  const sectors = useReservationStore((state) => state.sectors);
+  const updateReservation = useReservationStore(
+    (state) => state.updateReservation
+  );
+  const deleteReservation = useReservationStore(
+    (state) => state.deleteReservation
+  );
+  const changeReservationStatus = useReservationStore(
+    (state) => state.changeReservationStatus
+  );
+
+  const [formData, setFormData] = useState({
+    tableId: '',
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    partySize: 2,
+    startHour: 20,
+    startMinute: 0,
+    durationMinutes: 90,
+    status: 'CONFIRMED' as any, // eslint-disable-line
+    priority: 'STANDARD' as any, // eslint-disable-line
+    notes: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Pre-fill form when reservation changes
+  useEffect(() => {
+    if (reservation) {
+      const startTime = new Date(reservation.startTime);
+      setFormData({
+        tableId: reservation.tableId,
+        customerName: reservation.customer.name,
+        customerPhone: reservation.customer.phone,
+        customerEmail: reservation.customer.email || '',
+        partySize: reservation.partySize,
+        startHour: startTime.getHours(),
+        startMinute: startTime.getMinutes(),
+        durationMinutes: reservation.durationMinutes,
+        status: reservation.status,
+        priority: reservation.priority,
+        notes: reservation.notes || '',
+      });
+    }
+  }, [reservation]);
+
+  if (!reservation) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.tableId) {
+      newErrors.tableId = 'Debes seleccionar una mesa';
+    }
+    if (!formData.customerName.trim()) {
+      newErrors.customerName = 'El nombre es obligatorio';
+    }
+    if (!formData.customerPhone.trim()) {
+      newErrors.customerPhone = 'El teléfono es obligatorio';
+    }
+    if (formData.partySize < 1) {
+      newErrors.partySize = 'Debe haber al menos 1 persona';
+    }
+    if (
+      formData.durationMinutes < MIN_RESERVATION_DURATION ||
+      formData.durationMinutes > MAX_RESERVATION_DURATION
+    ) {
+      newErrors.durationMinutes = `La duración debe estar entre ${MIN_RESERVATION_DURATION} y ${MAX_RESERVATION_DURATION} minutos`;
+    }
+
+    // Check capacity
+    if (formData.tableId) {
+      const table = tables.find((t) => t.id === formData.tableId);
+      if (table) {
+        if (
+          formData.partySize < table.capacity.min ||
+          formData.partySize > table.capacity.max
+        ) {
+          newErrors.partySize = `Esta mesa acepta entre ${table.capacity.min} y ${table.capacity.max} personas`;
+        }
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Create ISO datetime for start time
+    const reservationDate = new Date(reservation.startTime);
+    const startTimeISO = createISODateTime(
+      reservationDate,
+      formData.startHour,
+      formData.startMinute
+    );
+
+    const input: UpdateReservationInput = {
+      id: reservation.id,
+      tableId: formData.tableId,
+      customer: {
+        name: formData.customerName,
+        phone: formData.customerPhone,
+        email: formData.customerEmail || undefined,
+      },
+      partySize: formData.partySize,
+      startTime: startTimeISO,
+      durationMinutes: formData.durationMinutes,
+      status: formData.status,
+      priority: formData.priority,
+      notes: formData.notes || undefined,
+    };
+
+    updateReservation(input);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (confirm('¿Estás seguro de eliminar esta reserva?')) {
+      deleteReservation(reservation.id);
+      onClose();
+    }
+  };
+
+  const selectedTable = tables.find((t) => t.id === formData.tableId);
+  const reservationDate = new Date(reservation.startTime);
+
+  return (
+    <Transition show={isOpen} as={Fragment}>
+      <Dialog onClose={onClose} className="relative z-50">
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/30" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 scale-95"
+            enterTo="opacity-100 scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+          >
+            <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl text-black">
+              <div className="mb-4 flex items-center justify-between">
+                <Dialog.Title className="text-2xl font-bold text-gray-900">
+                  Editar Reserva
+                </Dialog.Title>
+                <button
+                  onClick={handleDelete}
+                  className="rounded-md bg-red-100 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-200"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Date Display */}
+                <div className="rounded-md bg-blue-50 p-3 text-sm font-medium text-blue-900">
+                  📅 {formatDate(reservationDate)}
+                </div>
+
+                {/* Quick Status Change */}
+                <div className="flex gap-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    Estado rápido:
+                  </span>
+                  {(
+                    [
+                      'PENDING',
+                      'CONFIRMED',
+                      'SEATED',
+                      'FINISHED',
+                      'NO_SHOW',
+                      'CANCELLED',
+                    ] as const
+                  ).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => {
+                        changeReservationStatus(reservation.id, status);
+                        setFormData({ ...formData, status });
+                      }}
+                      className={`
+                        rounded px-2 py-1 text-xs font-medium transition-colors
+                        ${
+                          formData.status === status
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }
+                      `}
+                    >
+                      {STATUS_LABELS[status]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Table Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Mesa *
+                  </label>
+                  <select
+                    value={formData.tableId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tableId: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccionar mesa...</option>
+                    {sectors.map((sector) => (
+                      <optgroup key={sector.id} label={sector.name}>
+                        {tables
+                          .filter((t) => t.sectorId === sector.id)
+                          .map((table) => (
+                            <option key={table.id} value={table.id}>
+                              {table.name} ({table.capacity.min}-
+                              {table.capacity.max} personas)
+                            </option>
+                          ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  {errors.tableId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.tableId}
+                    </p>
+                  )}
+                </div>
+
+                {/* Customer Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nombre del cliente *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customerName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          customerName: e.target.value,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    {errors.customerName && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.customerName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Teléfono *
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.customerPhone}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          customerPhone: e.target.value,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    {errors.customerPhone && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.customerPhone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email (opcional)
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.customerEmail}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        customerEmail: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Party Size */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Número de comensales *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={formData.partySize}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        partySize: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  {selectedTable && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Capacidad de la mesa: {selectedTable.capacity.min}-
+                      {selectedTable.capacity.max} personas
+                    </p>
+                  )}
+                  {errors.partySize && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.partySize}
+                    </p>
+                  )}
+                </div>
+
+                {/* Time and Duration */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Hora
+                    </label>
+                    <input
+                      type="number"
+                      min="11"
+                      max="23"
+                      value={formData.startHour}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          startHour: parseInt(e.target.value) || 20,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Minutos
+                    </label>
+                    <select
+                      value={formData.startMinute}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          startMinute: parseInt(e.target.value),
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="0">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Duración (min)
+                    </label>
+                    <select
+                      value={formData.durationMinutes}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          durationMinutes: parseInt(e.target.value),
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="60">60 min</option>
+                      <option value="90">90 min</option>
+                      <option value="120">120 min</option>
+                      <option value="150">150 min</option>
+                      <option value="180">180 min</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Priority */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Prioridad
+                  </label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        priority: e.target.value as any, // eslint-disable-line
+                      })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="STANDARD">{PRIORITY_LABELS.STANDARD}</option>
+                    <option value="VIP">{PRIORITY_LABELS.VIP}</option>
+                    <option value="LARGE_GROUP">
+                      {PRIORITY_LABELS.LARGE_GROUP}
+                    </option>
+                  </select>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Notas
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Alergias, preferencias, ocasión especial..."
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </Dialog.Panel>
+          </Transition.Child>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+}

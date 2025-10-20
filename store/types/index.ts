@@ -42,7 +42,7 @@ export interface ReservationState {
   config: TimelineConfig;
 
   // Actions - Data mutations
-  addReservation: (input: CreateReservationInput) => void;
+  addReservation: (input: CreateReservationInput) => boolean;
   updateReservation: (input: UpdateReservationInput) => void;
   deleteReservation: (id: UUID) => void;
   changeReservationStatus: (id: UUID, status: ReservationStatus) => void;

@@ -77,11 +77,14 @@ export const useReservationStore = create<ReservationState>()(
       // Data Mutations
       // ========================================================================
 
-      addReservation: (input: CreateReservationInput) => {
+      addReservation: (input: CreateReservationInput): boolean => {
+        console.log('LLEGA', input);
         const updated = addReservationAction(get().reservations, input);
         if (updated) {
           set({ reservations: updated });
+          return true;
         }
+        return false;
       },
 
       updateReservation: (input: UpdateReservationInput) => {
@@ -225,12 +228,17 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       getFilteredReservations: () => {
-        const { reservations, tables, filters } = get();
-        return getFilteredReservationsSelector(reservations, tables, {
-          sectorIds: filters.sectorIds,
-          statuses: filters.statuses,
-          searchQuery: filters.searchQuery,
-        });
+        const { reservations, tables, filters, selectedDate } = get();
+        return getFilteredReservationsSelector(
+          reservations,
+          tables,
+          selectedDate,
+          {
+            sectorIds: filters.sectorIds,
+            statuses: filters.statuses,
+            searchQuery: filters.searchQuery,
+          }
+        );
       },
 
       checkConflict: (

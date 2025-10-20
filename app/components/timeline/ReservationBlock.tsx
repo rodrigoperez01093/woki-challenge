@@ -1,6 +1,6 @@
 'use client';
 
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Reservation } from '@/types';
 import {
@@ -16,68 +16,168 @@ import { useReservationStore } from '@/store/useReservationStore';
 interface ReservationBlockProps {
   reservation: Reservation;
   zoomLevel: number;
+  isOverlay?: boolean;
+  onEdit?: (reservation: Reservation) => void;
+  onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
 }
 
 export default function ReservationBlock({
   reservation,
   zoomLevel,
+  isOverlay,
+  onEdit,
+  onContextMenu,
 }: ReservationBlockProps) {
-  const selectedDate = useReservationStore((state) => state.selectedDate);
   const selectedReservationIds = useReservationStore(
     (state) => state.selectedReservationIds
   );
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: reservation.id,
-      data: {
-        reservation,
-        type: 'reservation',
-      },
-    });
+  // Make it droppable too (for collision detection)
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `reservation-drop-${reservation.id}`,
+    data: {
+      reservation,
+      type: 'reservation-drop',
+    },
+  });
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: reservation.id,
+    data: {
+      reservation,
+      type: 'reservation',
+    },
+  });
+
+  // Left resize handle
+  const {
+    attributes: leftHandleAttributes,
+    listeners: leftHandleListeners,
+    setNodeRef: setLeftHandleRef,
+  } = useDraggable({
+    id: `${reservation.id}-resize-left`,
+    data: {
+      reservation,
+      type: 'resize-left',
+      reservationId: reservation.id,
+    },
+  });
+
+  // Right resize handle
+  const {
+    attributes: rightHandleAttributes,
+    listeners: rightHandleListeners,
+    setNodeRef: setRightHandleRef,
+  } = useDraggable({
+    id: `${reservation.id}-resize-right`,
+    data: {
+      reservation,
+      type: 'resize-right',
+      reservationId: reservation.id,
+    },
+  });
+
+  // Combine refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  };
 
   const isSelected = selectedReservationIds.includes(reservation.id);
 
   // position and size
   const startTime = new Date(reservation.startTime);
-  const left = timeToX(startTime, selectedDate);
+
+  const reservationDate = new Date(reservation.startTime);
+  reservationDate.setHours(0, 0, 0, 0);
+
+  const left = timeToX(startTime, reservationDate) * zoomLevel;
   const width = durationToWidth(reservation.durationMinutes);
 
   const statusColors = STATUS_COLORS[reservation.status];
   const priorityStyles = PRIORITY_STYLES[reservation.priority];
 
-  const style = {
-    position: 'absolute' as const,
-    left: `${left}px`,
-    width: `${width}px`,
-    top: `${RESERVATION_VERTICAL_GAP}px`,
-    bottom: `${RESERVATION_VERTICAL_GAP}px`,
-    transform: transform
-      ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
-      : `scale(${zoomLevel})`,
-    transformOrigin: 'left top',
-    zIndex: isDragging
-      ? Z_INDEX.RESERVATION_DRAGGING
-      : isSelected
-        ? Z_INDEX.RESERVATION_HOVER
-        : Z_INDEX.RESERVATION,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'move',
+  // Tooltip content
+  const tooltipContent =
+    `${reservation.customer.name} - ${reservation.partySize} personas
+  ${formatTimeRange(reservation.startTime, reservation.endTime)} (${reservation.durationMinutes} min)
+  Estado: ${reservation.status}
+  ${reservation.customer.phone ? `Tel: ${reservation.customer.phone}` : ''}
+  ${reservation.notes ? `Notas: ${reservation.notes}` : ''}`.trim();
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContextMenu?.(reservation, e.clientX, e.clientY);
   };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger edit on left click, not when dragging
+    if (e.button === 0) {
+      onEdit?.(reservation);
+    }
+  };
+
+  // Combine listeners with our custom handlers
+  const combinedListeners = {
+    ...listeners,
+    onClick: (e: React.MouseEvent) => {
+      listeners?.onClick?.(e as any); // eslint-disable-line
+      if (!isDragging) {
+        handleClick(e);
+      }
+    },
+    onContextMenu: handleContextMenu,
+  };
+
+  const style = isOverlay
+    ? {
+        transform: transform
+          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
+          : `scale(${zoomLevel})`,
+        transformOrigin: 'left top',
+        zIndex: Z_INDEX.RESERVATION_DRAGGING,
+      }
+    : {
+        position: 'absolute' as const,
+        left: `${left}px`,
+        width: `${width}px`,
+        top: `${RESERVATION_VERTICAL_GAP}px`,
+        bottom: `${RESERVATION_VERTICAL_GAP}px`,
+        transform: transform
+          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
+          : `scale(${zoomLevel})`,
+        transformOrigin: 'left top',
+        zIndex: isDragging
+          ? Z_INDEX.RESERVATION_DRAGGING
+          : isSelected
+            ? Z_INDEX.RESERVATION_HOVER
+            : Z_INDEX.RESERVATION,
+        opacity: isDragging && !isOverlay ? 0 : 1,
+        cursor: 'move',
+      };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
+      {...combinedListeners}
       {...attributes}
+      title={tooltipContent}
       className={`
-        flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all
+        flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all duration-200
         ${statusColors.bg} ${statusColors.text}
         ${priorityStyles.border}
         ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
-        hover:shadow-md hover:-translate-y-0.5
+        hover:shadow-lg hover:-translate-y-0.5
       `}
+      onClick={() => onEdit?.(reservation)}
     >
       {/* Customer name */}
       <div className="flex items-center gap-1 text-xs font-bold">
@@ -98,6 +198,42 @@ export default function ReservationBlock({
         <div className="text-[10px] opacity-75" title={reservation.notes}>
           📝
         </div>
+      )}
+
+      {/* Resize handles - only show when not dragging and not overlay */}
+      {!isDragging && !isOverlay && (
+        <>
+          {/* Left resize handle */}
+          <div
+            ref={setLeftHandleRef}
+            {...leftHandleListeners}
+            {...leftHandleAttributes}
+            title="Arrastrar para cambiar hora de inicio"
+            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
+            style={{
+              transform: `scale(${1 / zoomLevel})`,
+              transformOrigin: 'left center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-blue-500 opacity-0 transition-opacity duration-200 group-hover:opacity-60" />
+          </div>
+          {/* Right resize handle */}
+          <div
+            ref={setRightHandleRef}
+            {...rightHandleListeners}
+            {...rightHandleAttributes}
+            title="Arrastrar para extender duración"
+            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
+            style={{
+              transform: `scale(${1 / zoomLevel})`,
+              transformOrigin: 'right center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute right-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-blue-500 opacity-0 transition-opacity duration-200 group-hover:opacity-60" />
+          </div>
+        </>
       )}
     </div>
   );
