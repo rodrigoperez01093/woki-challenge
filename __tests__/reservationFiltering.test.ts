@@ -1,11 +1,39 @@
+/* eslint-disable */
 import { describe, it, expect } from 'vitest';
 import {
   getFilteredReservations,
   getReservationsByTable,
+  getTablesBySector,
 } from '../store/selectors/reservationSelectors';
-import type { Reservation } from '@/types';
+import type { Reservation, Table } from '@/types';
 
 describe('Reservation Filtering', () => {
+  const mockTables: Table[] = [
+    {
+      id: 'TABLE_M1',
+      sectorId: 'SECTOR_MAIN',
+      name: 'M1',
+      capacity: { min: 2, max: 4 },
+      sortOrder: 1,
+    },
+    {
+      id: 'TABLE_M2',
+      sectorId: 'SECTOR_MAIN',
+      name: 'M2',
+      capacity: { min: 2, max: 4 },
+      sortOrder: 2,
+    },
+    {
+      id: 'TABLE_T1',
+      sectorId: 'SECTOR_TERRACE',
+      name: 'T1',
+      capacity: { min: 4, max: 8 },
+      sortOrder: 1,
+    },
+  ];
+
+  const selectedDate = new Date('2025-10-20T00:00:00.000Z');
+
   const mockReservations: Reservation[] = [
     {
       id: 'RES_001',
@@ -97,9 +125,9 @@ describe('Reservation Filtering', () => {
     it('should return all reservations when no filters applied', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null, // No sector filter
-        null, // No status filter
-        '' // No search query
+        mockTables,
+        selectedDate,
+        {} // No filters
       );
 
       expect(filtered).toHaveLength(4);
@@ -109,9 +137,9 @@ describe('Reservation Filtering', () => {
     it('should filter by status', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        'PENDING',
-        ''
+        mockTables,
+        selectedDate,
+        { statuses: ['PENDING'] }
       );
 
       expect(filtered).toHaveLength(1);
@@ -134,9 +162,9 @@ describe('Reservation Filtering', () => {
     it('should search by customer name (case-insensitive)', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        null,
-        'john' // Should match both "John Doe" and "Bob Johnson"
+        mockTables,
+        selectedDate,
+        { searchQuery: 'john' } // Should match both "John Doe" and "Bob Johnson"
       );
 
       expect(filtered.length).toBeGreaterThanOrEqual(1);
@@ -146,9 +174,9 @@ describe('Reservation Filtering', () => {
     it('should search by phone number', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        null,
-        '1234' // Partial phone match
+        mockTables,
+        selectedDate,
+        { searchQuery: '1234' } // Partial phone match
       );
 
       expect(filtered).toHaveLength(1);
@@ -158,9 +186,9 @@ describe('Reservation Filtering', () => {
     it('should search by email if present', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        null,
-        'jane@example.com'
+        mockTables,
+        selectedDate,
+        { searchQuery: 'jane@example.com' }
       );
 
       expect(filtered).toHaveLength(1);
@@ -171,9 +199,9 @@ describe('Reservation Filtering', () => {
       // Filter: status = CONFIRMED AND search contains "Doe"
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        'CONFIRMED',
-        'Doe'
+        mockTables,
+        selectedDate,
+        { statuses: ['CONFIRMED'], searchQuery: 'Doe' }
       );
 
       expect(filtered).toHaveLength(1);
@@ -185,9 +213,9 @@ describe('Reservation Filtering', () => {
     it('should return empty array when no matches found', () => {
       const filtered = getFilteredReservations(
         mockReservations,
-        null,
-        'CANCELLED',
-        ''
+        mockTables,
+        selectedDate,
+        { statuses: ['CANCELLED'] }
       );
 
       expect(filtered).toHaveLength(0);
@@ -227,8 +255,8 @@ describe('Reservation Filtering', () => {
       );
 
       // Should be in chronological order
-      expect(tableReservations[0].startTime).toBeLessThan(
-        tableReservations[1].startTime
+      expect(new Date(tableReservations[0].startTime).getTime()).toBeLessThan(
+        new Date(tableReservations[1].startTime).getTime()
       );
     });
   });
