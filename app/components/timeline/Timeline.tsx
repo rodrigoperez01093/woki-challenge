@@ -42,6 +42,14 @@ export default function Timeline() {
     };
   }, []);
 
+  useEffect(() => {
+    // Reset scroll position when zoom changes
+    if (gridBodyRef.current && timeHeaderRef.current) {
+      const scrollLeft = gridBodyRef.current.scrollLeft;
+      timeHeaderRef.current.scrollLeft = scrollLeft;
+    }
+  }, [zoomLevel]);
+
   // Drag & Drop handlers
   const handleDragStart = (event: DragStartEvent) => {
     // Optional: Visual feedback when drag starts

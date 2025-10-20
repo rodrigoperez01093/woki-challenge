@@ -225,12 +225,17 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       getFilteredReservations: () => {
-        const { reservations, tables, filters } = get();
-        return getFilteredReservationsSelector(reservations, tables, {
-          sectorIds: filters.sectorIds,
-          statuses: filters.statuses,
-          searchQuery: filters.searchQuery,
-        });
+        const { reservations, tables, filters, selectedDate } = get();
+        return getFilteredReservationsSelector(
+          reservations,
+          tables,
+          selectedDate,
+          {
+            sectorIds: filters.sectorIds,
+            statuses: filters.statuses,
+            searchQuery: filters.searchQuery,
+          }
+        );
       },
 
       checkConflict: (

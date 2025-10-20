@@ -22,7 +22,6 @@ export default function ReservationBlock({
   reservation,
   zoomLevel,
 }: ReservationBlockProps) {
-  const selectedDate = useReservationStore((state) => state.selectedDate);
   const selectedReservationIds = useReservationStore(
     (state) => state.selectedReservationIds
   );
@@ -40,7 +39,11 @@ export default function ReservationBlock({
 
   // position and size
   const startTime = new Date(reservation.startTime);
-  const left = timeToX(startTime, selectedDate);
+
+  const reservationDate = new Date(reservation.startTime);
+  reservationDate.setHours(0, 0, 0, 0);
+
+  const left = timeToX(startTime, reservationDate) * zoomLevel;
   const width = durationToWidth(reservation.durationMinutes);
 
   const statusColors = STATUS_COLORS[reservation.status];

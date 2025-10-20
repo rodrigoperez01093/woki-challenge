@@ -63,9 +63,20 @@ interface FilterOptions {
 export function getFilteredReservations(
   reservations: Reservation[],
   tables: Table[],
+  selectedDate: Date,
   options: FilterOptions = {}
 ): Reservation[] {
   let filtered = [...reservations];
+
+  // Filter by selected date (same day)
+  filtered = filtered.filter((res) => {
+    const resDate = new Date(res.startTime);
+    return (
+      resDate.getFullYear() === selectedDate.getFullYear() &&
+      resDate.getMonth() === selectedDate.getMonth() &&
+      resDate.getDate() === selectedDate.getDate()
+    );
+  });
 
   // Filter by sectors
   if (options.sectorIds && options.sectorIds.length > 0) {

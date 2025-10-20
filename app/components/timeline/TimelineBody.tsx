@@ -3,6 +3,7 @@
 import { useReservationStore } from '@/store/useReservationStore';
 import { GRID_WIDTH, ROW_HEIGHT } from '@/lib/constants';
 import TableRow from './TableRow';
+import { useMemo } from 'react';
 
 interface TimelineBodyProps {
   zoomLevel: number;
@@ -14,9 +15,22 @@ interface TimelineBodyProps {
 export default function TimelineBody({ zoomLevel }: TimelineBodyProps) {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
-  const reservations = useReservationStore((state) => state.reservations);
   const collapsedSectorIds = useReservationStore(
     (state) => state.collapsedSectorIds
+  );
+
+  // Obtener dependencias para el filtro
+  const allReservations = useReservationStore((state) => state.reservations);
+  const filters = useReservationStore((state) => state.filters);
+  const selectedDate = useReservationStore((state) => state.selectedDate);
+  const getFilteredReservations = useReservationStore(
+    (state) => state.getFilteredReservations
+  );
+
+  // Memoizar el resultado
+  const reservations = useMemo(
+    () => getFilteredReservations(),
+    [allReservations, filters, selectedDate, getFilteredReservations] // eslint-disable-line
   );
 
   const scaledWidth = GRID_WIDTH * zoomLevel;
