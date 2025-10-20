@@ -18,7 +18,7 @@ export default function TableRow({
   zoomLevel,
   rowHeight,
 }: TableRowProps) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: `table-${table.id}`,
     data: {
       tableId: table.id,
@@ -29,7 +29,6 @@ export default function TableRow({
   const scaledSlotWidth = SLOT_WIDTH * zoomLevel;
   const totalWidth = TOTAL_SLOTS * scaledSlotWidth;
 
-  // Generate grid cells
   const gridCells = Array.from({ length: TOTAL_SLOTS }, (_, i) => {
     const isHour = i % 4 === 0;
     const isHalfHour = i % 2 === 0;
@@ -44,18 +43,21 @@ export default function TableRow({
   return (
     <div
       ref={setNodeRef}
-      className="relative border-b"
+      className={`
+        relative border-b
+        ${isOver ? 'bg-blue-400' : ''}
+      `}
       style={{
         height: `${rowHeight}px`,
         width: `${totalWidth}px`,
         borderColor: GRID_LINE_COLORS.BORDER,
       }}
     >
-      {/* Grid cells - absolutely positioned */}
+      {/* Grid cells */}
       {gridCells.map((cell) => (
         <div
           key={cell.index}
-          className="absolute top-0 bottom-0 border-r"
+          className="absolute top-0 bottom-0 border-r pointer-events-none"
           style={{
             left: `${cell.index * scaledSlotWidth}px`,
             width: `${scaledSlotWidth}px`,

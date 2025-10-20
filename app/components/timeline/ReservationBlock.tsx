@@ -1,6 +1,6 @@
 'use client';
 
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Reservation } from '@/types';
 import {
@@ -16,24 +16,46 @@ import { useReservationStore } from '@/store/useReservationStore';
 interface ReservationBlockProps {
   reservation: Reservation;
   zoomLevel: number;
+  isOverlay?: boolean;
 }
 
 export default function ReservationBlock({
   reservation,
   zoomLevel,
+  isOverlay,
 }: ReservationBlockProps) {
   const selectedReservationIds = useReservationStore(
     (state) => state.selectedReservationIds
   );
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: reservation.id,
-      data: {
-        reservation,
-        type: 'reservation',
-      },
-    });
+  // Make it droppable too (for collision detection)
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `reservation-drop-${reservation.id}`,
+    data: {
+      reservation,
+      type: 'reservation-drop',
+    },
+  });
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: reservation.id,
+    data: {
+      reservation,
+      type: 'reservation',
+    },
+  });
+
+  // Combine refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  };
 
   const isSelected = selectedReservationIds.includes(reservation.id);
 
@@ -49,24 +71,32 @@ export default function ReservationBlock({
   const statusColors = STATUS_COLORS[reservation.status];
   const priorityStyles = PRIORITY_STYLES[reservation.priority];
 
-  const style = {
-    position: 'absolute' as const,
-    left: `${left}px`,
-    width: `${width}px`,
-    top: `${RESERVATION_VERTICAL_GAP}px`,
-    bottom: `${RESERVATION_VERTICAL_GAP}px`,
-    transform: transform
-      ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
-      : `scale(${zoomLevel})`,
-    transformOrigin: 'left top',
-    zIndex: isDragging
-      ? Z_INDEX.RESERVATION_DRAGGING
-      : isSelected
-        ? Z_INDEX.RESERVATION_HOVER
-        : Z_INDEX.RESERVATION,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'move',
-  };
+  const style = isOverlay
+    ? {
+        transform: transform
+          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
+          : `scale(${zoomLevel})`,
+        transformOrigin: 'left top',
+        zIndex: Z_INDEX.RESERVATION_DRAGGING,
+      }
+    : {
+        position: 'absolute' as const,
+        left: `${left}px`,
+        width: `${width}px`,
+        top: `${RESERVATION_VERTICAL_GAP}px`,
+        bottom: `${RESERVATION_VERTICAL_GAP}px`,
+        transform: transform
+          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
+          : `scale(${zoomLevel})`,
+        transformOrigin: 'left top',
+        zIndex: isDragging
+          ? Z_INDEX.RESERVATION_DRAGGING
+          : isSelected
+            ? Z_INDEX.RESERVATION_HOVER
+            : Z_INDEX.RESERVATION,
+        opacity: isDragging && !isOverlay ? 0 : 1,
+        cursor: 'move',
+      };
 
   return (
     <div
