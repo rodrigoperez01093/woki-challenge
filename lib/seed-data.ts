@@ -1,4 +1,4 @@
-import type { SeedData } from '@/app/types';
+import type { SeedData } from '@/types';
 import { restaurant } from './data/restaurant';
 import { sectors } from './data/sectors';
 import { tables } from './data/tables';

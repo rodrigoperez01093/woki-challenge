@@ -7,13 +7,13 @@ import type {
   UpdateReservationInput,
   ConflictCheck,
   ViewMode,
-} from '@/app/types';
+} from '@/types';
 import {
   restaurant as initialRestaurant,
   sectors as initialSectors,
   tables as initialTables,
   reservations as initialReservations,
-} from '@/app/lib/seed-data';
+} from '@/lib/seed-data';
 
 // Actions
 import {
@@ -43,6 +43,7 @@ import {
 // Utils
 import { checkConflict as checkConflictUtil } from './utils/conflictDetection';
 import { ReservationState, FiltersState } from './types';
+import { parseISO } from 'date-fns';
 
 //#region Store
 export const useReservationStore = create<ReservationState>()(
@@ -56,7 +57,7 @@ export const useReservationStore = create<ReservationState>()(
       tables: initialTables,
       reservations: initialReservations,
 
-      selectedDate: new Date('2025-10-15'),
+      selectedDate: parseISO('2025-10-15'),
       viewMode: 'day',
       zoomLevel: 1,
       selectedReservationIds: [],

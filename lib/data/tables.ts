@@ -1,4 +1,4 @@
-import type { Table } from '@/app/types';
+import type { Table } from '@/types';
 
 export const tables: Table[] = [
   //#region Main Hall - 10 tables

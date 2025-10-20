@@ -1,4 +1,4 @@
-import type { UUID } from '@/app/types';
+import type { UUID } from '@/types';
 
 /**
  * Generates a unique ID for a new reservation

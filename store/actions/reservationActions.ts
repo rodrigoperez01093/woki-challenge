@@ -4,7 +4,7 @@ import type {
   UpdateReservationInput,
   UUID,
   ReservationStatus,
-} from '@/app/types';
+} from '@/types';
 import {
   generateId,
   calculateEndTime,

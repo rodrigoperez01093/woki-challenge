@@ -1,4 +1,4 @@
-import { Sector } from '@/app/types';
+import { Sector } from '@/types';
 
 export const sectors: Sector[] = [
   {
