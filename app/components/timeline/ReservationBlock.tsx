@@ -55,6 +55,34 @@ export default function ReservationBlock({
     },
   });
 
+  // Left resize handle
+  const {
+    attributes: leftHandleAttributes,
+    listeners: leftHandleListeners,
+    setNodeRef: setLeftHandleRef,
+  } = useDraggable({
+    id: `${reservation.id}-resize-left`,
+    data: {
+      reservation,
+      type: 'resize-left',
+      reservationId: reservation.id,
+    },
+  });
+
+  // Right resize handle
+  const {
+    attributes: rightHandleAttributes,
+    listeners: rightHandleListeners,
+    setNodeRef: setRightHandleRef,
+  } = useDraggable({
+    id: `${reservation.id}-resize-right`,
+    data: {
+      reservation,
+      type: 'resize-right',
+      reservationId: reservation.id,
+    },
+  });
+
   // Combine refs
   const setNodeRef = (node: HTMLElement | null) => {
     setDraggableRef(node);
@@ -74,6 +102,14 @@ export default function ReservationBlock({
 
   const statusColors = STATUS_COLORS[reservation.status];
   const priorityStyles = PRIORITY_STYLES[reservation.priority];
+
+  // Tooltip content
+  const tooltipContent =
+    `${reservation.customer.name} - ${reservation.partySize} personas
+  ${formatTimeRange(reservation.startTime, reservation.endTime)} (${reservation.durationMinutes} min)
+  Estado: ${reservation.status}
+  ${reservation.customer.phone ? `Tel: ${reservation.customer.phone}` : ''}
+  ${reservation.notes ? `Notas: ${reservation.notes}` : ''}`.trim();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -133,12 +169,13 @@ export default function ReservationBlock({
       style={style}
       {...combinedListeners}
       {...attributes}
+      title={tooltipContent}
       className={`
-        flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all
+        flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all duration-200
         ${statusColors.bg} ${statusColors.text}
         ${priorityStyles.border}
         ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
-        hover:shadow-md hover:-translate-y-0.5
+        hover:shadow-lg hover:-translate-y-0.5
       `}
       onClick={() => onEdit?.(reservation)}
     >
@@ -161,6 +198,42 @@ export default function ReservationBlock({
         <div className="text-[10px] opacity-75" title={reservation.notes}>
           📝
         </div>
+      )}
+
+      {/* Resize handles - only show when not dragging and not overlay */}
+      {!isDragging && !isOverlay && (
+        <>
+          {/* Left resize handle */}
+          <div
+            ref={setLeftHandleRef}
+            {...leftHandleListeners}
+            {...leftHandleAttributes}
+            title="Arrastrar para cambiar hora de inicio"
+            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
+            style={{
+              transform: `scale(${1 / zoomLevel})`,
+              transformOrigin: 'left center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-blue-500 opacity-0 transition-opacity duration-200 group-hover:opacity-60" />
+          </div>
+          {/* Right resize handle */}
+          <div
+            ref={setRightHandleRef}
+            {...rightHandleListeners}
+            {...rightHandleAttributes}
+            title="Arrastrar para extender duración"
+            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
+            style={{
+              transform: `scale(${1 / zoomLevel})`,
+              transformOrigin: 'right center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute right-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-blue-500 opacity-0 transition-opacity duration-200 group-hover:opacity-60" />
+          </div>
+        </>
       )}
     </div>
   );

@@ -13,7 +13,8 @@ export default function Toolbar() {
       <div className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
         {/* New Reservation Button */}
         <button
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          title="Crear nueva reserva (Ctrl + N)"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-md active:scale-95"
           onClick={() => setIsCreateModalOpen(true)}
         >
           + Nueva Reserva

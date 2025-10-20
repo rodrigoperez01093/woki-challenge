@@ -18,13 +18,21 @@ import TimelineBody from './TimelineBody';
 import TimelineSidebar from './TimelineSidebar';
 import CurrentTimeLine from './CurrentTimeLine';
 import ReservationBlock from './ReservationBlock';
-import { HEADER_HEIGHT, SIDEBAR_WIDTH, ROW_HEIGHT } from '@/lib/constants';
+import {
+  HEADER_HEIGHT,
+  SIDEBAR_WIDTH,
+  ROW_HEIGHT,
+  MIN_RESERVATION_DURATION,
+  MAX_RESERVATION_DURATION,
+  SLOT_WIDTH,
+} from '@/lib/constants';
 import { xToTime, snapToSlot, timeToX } from '@/lib/utils/coordinateUtils';
 import { createISODateTime } from '@/lib/utils/dateUtils';
 import type { Reservation } from '@/types';
 import EditReservationModal from '../modals/EditReservationModal';
 import CreateReservationModal from '../modals/CreateReservationModal';
 import ReservationContextMenu from './ReservationContextMenu';
+import { useToast } from '@/app/hooks/useToast';
 
 /**
  * Main Timeline component
@@ -33,11 +41,19 @@ import ReservationContextMenu from './ReservationContextMenu';
 export default function Timeline() {
   const timeHeaderRef = useRef<HTMLDivElement>(null);
   const gridBodyRef = useRef<HTMLDivElement>(null);
+  const toast = useToast();
   const [activeReservation, setActiveReservation] =
     useState<Reservation | null>(null);
   const [editingReservation, setEditingReservation] =
     useState<Reservation | null>(null);
   const [hasConflict, setHasConflict] = useState(false);
+  const [isResizing, setIsResizing] = useState<'left' | 'right' | null>(null);
+  const [resizePreviewDuration, setResizePreviewDuration] = useState<
+    number | null
+  >(null);
+  const [resizePreviewStartTime, setResizePreviewStartTime] = useState<
+    string | null
+  >(null);
   const [contextMenu, setContextMenu] = useState<{
     reservation: Reservation;
     x: number;
@@ -45,11 +61,18 @@ export default function Timeline() {
   } | null>(null);
   const [duplicatingReservation, setDuplicatingReservation] =
     useState<Reservation | null>(null);
+  const [createReservationData, setCreateReservationData] = useState<{
+    tableId: string;
+    startTime: Date;
+  } | null>(null);
 
   // Store state
   const selectedDate = useReservationStore((state) => state.selectedDate);
   const zoomLevel = useReservationStore((state) => state.zoomLevel);
   const moveReservation = useReservationStore((state) => state.moveReservation);
+  const resizeReservation = useReservationStore(
+    (state) => state.resizeReservation
+  );
   const checkConflict = useReservationStore((state) => state.checkConflict);
 
   // Configure drag sensors
@@ -87,12 +110,32 @@ export default function Timeline() {
     }
   }, [zoomLevel]);
 
+  // Handler for clicking on empty slot
+  const handleEmptySlotClick = (tableId: string, clickTime: Date) => {
+    setCreateReservationData({ tableId, startTime: clickTime });
+  };
+
   // Drag & Drop handlers
   const handleDragStart = (event: DragStartEvent) => {
     const activeData = event.active.data.current;
     if (activeData && activeData.reservation) {
       setActiveReservation(activeData.reservation);
       setHasConflict(false);
+
+      // Check if we're resizing
+      if (activeData.type === 'resize-left') {
+        setIsResizing('left');
+        setResizePreviewDuration(activeData.reservation.durationMinutes);
+        setResizePreviewStartTime(activeData.reservation.startTime);
+      } else if (activeData.type === 'resize-right') {
+        setIsResizing('right');
+        setResizePreviewDuration(activeData.reservation.durationMinutes);
+        setResizePreviewStartTime(activeData.reservation.startTime);
+      } else {
+        setIsResizing(null);
+        setResizePreviewDuration(null);
+        setResizePreviewStartTime(null);
+      }
     }
   };
 
@@ -101,6 +144,84 @@ export default function Timeline() {
 
     if (!activeReservation) {
       setHasConflict(false);
+      return;
+    }
+
+    // Handle resize
+    if (isResizing) {
+      const deltaMinutes = Math.round((delta.x / SLOT_WIDTH) * 15);
+
+      let newDuration = activeReservation.durationMinutes;
+      let newStartTime = activeReservation.startTime;
+
+      if (isResizing === 'right') {
+        // Resize right: change end time, keep start time
+        newDuration = activeReservation.durationMinutes + deltaMinutes;
+        // Ensure duration is a multiple of 15
+        newDuration = Math.round(newDuration / 15) * 15;
+        newStartTime = activeReservation.startTime; // Keep original
+      } else if (isResizing === 'left') {
+        // Resize left: change start time, keep end time fixed
+        const originalEndTime = new Date(activeReservation.endTime);
+        const originalStartTime = new Date(activeReservation.startTime);
+        const reservationDate = new Date(activeReservation.startTime);
+        reservationDate.setHours(0, 0, 0, 0);
+
+        // Calculate new X position and snap to slot
+        const originalX = timeToX(originalStartTime, reservationDate);
+        const newX = snapToSlot(originalX + delta.x);
+
+        // Convert back to time (snapped to 15-min slots)
+        const newStart = xToTime(newX, selectedDate);
+
+        // Calculate new duration based on fixed end time
+        newDuration = Math.round(
+          (originalEndTime.getTime() - newStart.getTime()) / (1000 * 60)
+        );
+        newStartTime = createISODateTime(
+          newStart,
+          newStart.getHours(),
+          newStart.getMinutes()
+        );
+      }
+
+      // Clamp to min/max
+      newDuration = Math.max(
+        MIN_RESERVATION_DURATION,
+        Math.min(MAX_RESERVATION_DURATION, newDuration)
+      );
+
+      // Recalculate start time if duration was clamped during left resize
+      if (isResizing === 'left') {
+        const originalEndTime = new Date(activeReservation.endTime);
+        const recalculatedStart = new Date(originalEndTime);
+        recalculatedStart.setMinutes(
+          recalculatedStart.getMinutes() - newDuration
+        );
+        newStartTime = createISODateTime(
+          recalculatedStart,
+          recalculatedStart.getHours(),
+          recalculatedStart.getMinutes()
+        );
+      }
+
+      setResizePreviewDuration(newDuration);
+      setResizePreviewStartTime(newStartTime);
+
+      // Check for conflicts with new times
+      const endTimeForConflictCheck = new Date(newStartTime);
+      endTimeForConflictCheck.setMinutes(
+        endTimeForConflictCheck.getMinutes() + newDuration
+      );
+
+      const conflict = checkConflict(
+        activeReservation.tableId,
+        newStartTime,
+        endTimeForConflictCheck.toISOString(),
+        activeReservation.id
+      );
+
+      setHasConflict(conflict.hasConflict);
       return;
     }
 
@@ -176,6 +297,70 @@ export default function Timeline() {
       return;
     }
 
+    // Handle resize end
+    if (isResizing && resizePreviewDuration !== null) {
+      // Check if there's a conflict before applying
+      if (hasConflict) {
+        toast.error('No se puede redimensionar: conflicto con otra reserva');
+        setActiveReservation(null);
+        setIsResizing(null);
+        setResizePreviewDuration(null);
+        setResizePreviewStartTime(null);
+        setHasConflict(false);
+        return;
+      }
+
+      let success = false;
+
+      if (isResizing === 'right') {
+        // Resize right: only change duration
+        success = resizeReservation(
+          activeReservation.id,
+          resizePreviewDuration
+        );
+      } else if (isResizing === 'left' && resizePreviewStartTime) {
+        // Resize left: change start time AND duration
+        // Need to verify no conflict one more time
+        const endTimeForCheck = new Date(resizePreviewStartTime);
+        endTimeForCheck.setMinutes(
+          endTimeForCheck.getMinutes() + resizePreviewDuration
+        );
+
+        const conflict = checkConflict(
+          activeReservation.tableId,
+          resizePreviewStartTime,
+          endTimeForCheck.toISOString(),
+          activeReservation.id
+        );
+
+        if (!conflict.hasConflict) {
+          const updateReservation =
+            useReservationStore.getState().updateReservation;
+          updateReservation({
+            id: activeReservation.id,
+            startTime: resizePreviewStartTime,
+            durationMinutes: resizePreviewDuration,
+          });
+          success = true;
+        } else {
+          console.warn('Cannot resize left - conflict detected');
+        }
+      }
+
+      if (success) {
+        toast.success('Reserva redimensionada correctamente');
+      } else {
+        toast.error('Error al redimensionar la reserva');
+      }
+
+      setActiveReservation(null);
+      setIsResizing(null);
+      setResizePreviewDuration(null);
+      setResizePreviewStartTime(null);
+      setHasConflict(false);
+      return;
+    }
+
     const reservationId = active.id as string;
 
     // Calculate new position
@@ -230,9 +415,9 @@ export default function Timeline() {
     );
 
     if (success) {
-      console.log('Reservation moved successfully');
+      toast.success('Reserva movida correctamente');
     } else {
-      console.warn('Failed to move reservation - conflict detected');
+      toast.error('No se puede mover: conflicto con otra reserva');
     }
 
     setActiveReservation(null);
@@ -276,6 +461,7 @@ export default function Timeline() {
               onContextMenu={(reservation, x, y) =>
                 setContextMenu({ reservation, x, y })
               }
+              onEmptySlotClick={handleEmptySlotClick}
             />
             <CurrentTimeLine selectedDate={selectedDate} />
           </div>
@@ -343,6 +529,19 @@ export default function Timeline() {
                 notes: duplicatingReservation.notes,
                 status: 'PENDING',
                 // Dejar tableId y startTime vacíos para que el usuario los configure
+              }
+            : undefined
+        }
+      />
+      {/* Create Reservation Modal (for empty slot click) */}
+      <CreateReservationModal
+        isOpen={createReservationData !== null}
+        onClose={() => setCreateReservationData(null)}
+        prefilledData={
+          createReservationData
+            ? {
+                tableId: createReservationData.tableId,
+                startTime: createReservationData.startTime,
               }
             : undefined
         }

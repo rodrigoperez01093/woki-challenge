@@ -3,6 +3,8 @@
 import { useDroppable } from '@dnd-kit/core';
 import type { Table, Reservation } from '@/types';
 import { GRID_LINE_COLORS, SLOT_WIDTH, TOTAL_SLOTS } from '@/lib/constants';
+import { xToTime } from '@/lib/utils/coordinateUtils';
+import { useReservationStore } from '@/store/useReservationStore';
 import ReservationBlock from './ReservationBlock';
 
 interface TableRowProps {
@@ -12,6 +14,7 @@ interface TableRowProps {
   rowHeight: number;
   onEditReservation?: (reservation: Reservation) => void;
   onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
+  onEmptySlotClick?: (tableId: string, clickTime: Date) => void;
 }
 
 export default function TableRow({
@@ -21,6 +24,7 @@ export default function TableRow({
   rowHeight,
   onEditReservation,
   onContextMenu,
+  onEmptySlotClick,
 }: TableRowProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `table-${table.id}`,
@@ -29,6 +33,8 @@ export default function TableRow({
       type: 'table-row',
     },
   });
+
+  const selectedDate = useReservationStore((state) => state.selectedDate);
 
   const scaledSlotWidth = SLOT_WIDTH * zoomLevel;
   const totalWidth = TOTAL_SLOTS * scaledSlotWidth;
@@ -44,11 +50,30 @@ export default function TableRow({
     };
   });
 
+  const handleRowClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only handle clicks directly on the row (not on reservation blocks)
+    if (e.target !== e.currentTarget) return;
+
+    // Get the click position relative to the row
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+
+    // Adjust for zoom level
+    const actualX = clickX / zoomLevel;
+
+    // Convert X position to time
+    const clickTime = xToTime(actualX, selectedDate);
+
+    // Call the callback
+    onEmptySlotClick?.(table.id, clickTime);
+  };
+
   return (
     <div
       ref={setNodeRef}
+      onClick={handleRowClick}
       className={`
-        relative border-b
+        relative border-b cursor-pointer
         ${isOver ? 'bg-blue-400' : ''}
       `}
       style={{

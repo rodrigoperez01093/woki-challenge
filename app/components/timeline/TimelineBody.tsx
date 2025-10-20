@@ -10,6 +10,7 @@ interface TimelineBodyProps {
   zoomLevel: number;
   onEditReservation?: (reservation: Reservation) => void;
   onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
+  onEmptySlotClick?: (tableId: string, clickTime: Date) => void;
 }
 
 /**
@@ -19,6 +20,7 @@ export default function TimelineBody({
   zoomLevel,
   onEditReservation,
   onContextMenu,
+  onEmptySlotClick,
 }: TimelineBodyProps) {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
@@ -66,6 +68,7 @@ export default function TimelineBody({
                   rowHeight={ROW_HEIGHT}
                   onEditReservation={onEditReservation}
                   onContextMenu={onContextMenu}
+                  onEmptySlotClick={onEmptySlotClick}
                 />
               );
             })}

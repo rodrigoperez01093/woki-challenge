@@ -38,6 +38,7 @@ export default function ZoomControls() {
       <button
         onClick={zoomOut}
         disabled={!canZoomOut}
+        title="Alejar (Ctrl + -)"
         className="rounded px-2 py-1 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent"
         aria-label="Alejar"
       >
@@ -48,7 +49,7 @@ export default function ZoomControls() {
       <button
         onClick={resetZoom}
         className="min-w-[60px] rounded px-3 py-1 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
-        title="Click para resetear al 100%"
+        title="Click para resetear al 100% (Ctrl + 0)"
       >
         {Math.round(zoomLevel * 100)}%
       </button>
@@ -57,6 +58,7 @@ export default function ZoomControls() {
       <button
         onClick={zoomIn}
         disabled={!canZoomIn}
+        title="Acercar (Ctrl + +)"
         className="rounded px-2 py-1 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent"
         aria-label="Acercar"
       >
