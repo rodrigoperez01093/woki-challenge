@@ -10,7 +10,7 @@ import {
   UpdateReservationInput,
   UUID,
   ViewMode,
-} from '@/app/types';
+} from '@/types';
 
 /**
  * Filters state interface

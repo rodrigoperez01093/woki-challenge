@@ -1,4 +1,4 @@
-import type { Reservation, UUID, ConflictCheck } from '@/app/types';
+import type { Reservation, UUID, ConflictCheck } from '@/types';
 
 /**
  * Checks if two time ranges overlap

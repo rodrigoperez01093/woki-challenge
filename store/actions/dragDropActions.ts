@@ -1,4 +1,4 @@
-import type { Reservation, UUID } from '@/app/types';
+import type { Reservation, UUID } from '@/types';
 import { calculateEndTime, isValidDuration } from '../utils/helpers';
 import { checkConflict } from '../utils/conflictDetection';
 import { updateReservation } from './reservationActions';

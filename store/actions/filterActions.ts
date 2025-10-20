@@ -1,4 +1,4 @@
-import type { UUID, ReservationStatus } from '@/app/types';
+import type { UUID, ReservationStatus } from '@/types';
 import type { FiltersState } from '@/app/store/types';
 /**
  * Creates initial/empty filters

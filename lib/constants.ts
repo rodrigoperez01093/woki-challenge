@@ -1,4 +1,4 @@
-import type { ReservationStatus, Priority } from '@/app/types';
+import type { ReservationStatus, Priority } from '@/types';
 
 // ============================================================================
 //#region Timeline Grid Configuration

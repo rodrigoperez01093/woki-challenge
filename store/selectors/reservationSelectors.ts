@@ -4,7 +4,7 @@ import type {
   Sector,
   UUID,
   ReservationStatus,
-} from '@/app/types';
+} from '@/types';
 
 // ============================================================================
 // Basic Selectors
