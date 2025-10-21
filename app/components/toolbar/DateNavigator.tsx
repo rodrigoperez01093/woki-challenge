@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useReservationStore } from '@/store/useReservationStore';
-import { formatDateLong } from '@/lib/utils/dateUtils';
+import { formatDateLong, formatDateShort } from '@/lib/utils/dateUtils';
 import { addDays } from 'date-fns';
 
 /**
@@ -10,6 +11,12 @@ import { addDays } from 'date-fns';
 export default function DateNavigator() {
   const selectedDate = useReservationStore((state) => state.selectedDate);
   const setSelectedDate = useReservationStore((state) => state.setSelectedDate);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration errors by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const goToPreviousDay = () => {
     setSelectedDate(addDays(selectedDate, -1));
@@ -23,7 +30,9 @@ export default function DateNavigator() {
     setSelectedDate(new Date());
   };
 
-  const isToday = new Date().toDateString() === selectedDate.toDateString();
+  const isToday = isMounted
+    ? new Date().toDateString() === selectedDate.toDateString()
+    : false;
 
   return (
     <div className="flex items-center gap-2">
@@ -37,9 +46,18 @@ export default function DateNavigator() {
       </button>
 
       {/* Current Date Display */}
-      <div className="min-w-[280px] text-center">
+      <div className="min-w-[100px] text-center md:min-w-[280px]">
         <div className="text-sm font-semibold text-gray-900">
-          {formatDateLong(selectedDate)}
+          {isMounted ? (
+            <>
+              <span className="md:hidden">{formatDateShort(selectedDate)}</span>
+              <span className="hidden md:inline">
+                {formatDateLong(selectedDate)}
+              </span>
+            </>
+          ) : (
+            ''
+          )}
         </div>
       </div>
 

@@ -24,6 +24,13 @@ import type { ISODateTime } from '@/types';
  */
 export function formatTime(date: Date | string): string {
   const d = typeof date === 'string' ? parseISO(date) : date;
+
+  // Validate the date object
+  if (!d || isNaN(d.getTime())) {
+    console.error('Invalid date provided to formatTime:', date);
+    return '--:--';
+  }
+
   return format(d, 'HH:mm');
 }
 
@@ -53,6 +60,20 @@ export function formatDate(date: Date | string): string {
 export function formatDateLong(date: Date | string): string {
   const d = typeof date === 'string' ? parseISO(date) : date;
   return format(d, "EEEE dd 'de' MMMM, yyyy", { locale: es });
+}
+
+/**
+ * Formats a date to short numeric format
+ *
+ * @param date - Date object or ISO string
+ * @returns Formatted date string
+ *
+ * @example
+ * formatDateShort(new Date('2025-10-15')) // Returns "15/10/2025"
+ */
+export function formatDateShort(date: Date | string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date;
+  return format(d, 'dd/MM/yyyy');
 }
 
 /**

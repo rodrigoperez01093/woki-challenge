@@ -47,7 +47,14 @@ const TimelineHeader = forwardRef<HTMLDivElement, TimelineHeaderProps>(
         className="flex overflow-x-auto overflow-y-hidden bg-white scrollbar-none"
         style={{ width: '100%' }}
       >
-        <div className="flex" style={{ width: `${scaledWidth}px` }}>
+        <div
+          className="flex"
+          style={{
+            width: `${scaledWidth}px`,
+            minWidth: `${scaledWidth}px`,
+            maxWidth: `${scaledWidth}px`,
+          }}
+        >
           {slots.map((slot) => (
             <div
               key={slot.index}

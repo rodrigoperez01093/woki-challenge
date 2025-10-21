@@ -1,7 +1,42 @@
 import type { Reservation, Table } from '@/types';
 import { tables } from './tables';
 
-const baseDate = '2025-10-15';
+// Helper function to format date as YYYY-MM-DD
+const formatDateYYYYMMDD = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+// Get dates for seed data
+const getDatesForSeed = () => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return {
+    today: formatDateYYYYMMDD(today),
+    yesterday: formatDateYYYYMMDD(yesterday),
+    tomorrow: formatDateYYYYMMDD(tomorrow),
+  };
+};
+
+// For SSR consistency, use static dates initially
+const isServer = typeof window === 'undefined';
+const staticToday = new Date('2025-01-20');
+const staticYesterday = new Date('2025-01-19');
+const staticTomorrow = new Date('2025-01-21');
+
+const dates = isServer
+  ? {
+      today: formatDateYYYYMMDD(staticToday),
+      yesterday: formatDateYYYYMMDD(staticYesterday),
+      tomorrow: formatDateYYYYMMDD(staticTomorrow),
+    }
+  : getDatesForSeed();
+
+// Use baseDate for backwards compatibility with existing reservation data
+const baseDate = dates.today;
 
 export const reservations: Reservation[] = [
   //#region Lunch Service (12:00 - 16:00)
@@ -610,13 +645,207 @@ export const reservations: Reservation[] = [
     createdAt: `${baseDate}T22:00:00-03:00`,
     updatedAt: `${baseDate}T22:00:00-03:00`,
   },
+
+  //#region YESTERDAY - Finished reservations
+  {
+    id: 'RES_Y001',
+    tableId: 'TABLE_M1',
+    customer: {
+      name: 'Pedro Alvarez',
+      phone: '+54 9 11 5555-4001',
+      email: 'pedro.a@example.com',
+    },
+    partySize: 2,
+    startTime: `${dates.yesterday}T12:00:00-03:00`,
+    endTime: `${dates.yesterday}T13:30:00-03:00`,
+    durationMinutes: 90,
+    status: 'FINISHED',
+    priority: 'STANDARD',
+    source: 'web',
+    createdAt: `${dates.yesterday}T08:00:00-03:00`,
+    updatedAt: `${dates.yesterday}T13:30:00-03:00`,
+  },
+  {
+    id: 'RES_Y002',
+    tableId: 'TABLE_M3',
+    customer: {
+      name: 'Gabriela Morales',
+      phone: '+54 9 11 5555-4002',
+    },
+    partySize: 4,
+    startTime: `${dates.yesterday}T13:00:00-03:00`,
+    endTime: `${dates.yesterday}T14:30:00-03:00`,
+    durationMinutes: 90,
+    status: 'NO_SHOW',
+    priority: 'STANDARD',
+    source: 'phone',
+    createdAt: `${dates.yesterday}T10:00:00-03:00`,
+    updatedAt: `${dates.yesterday}T14:45:00-03:00`,
+  },
+  {
+    id: 'RES_Y003',
+    tableId: 'TABLE_V1',
+    customer: {
+      name: 'VIP Client Gamma',
+      phone: '+54 9 11 5555-4003',
+      email: 'gamma@vip.com',
+    },
+    partySize: 4,
+    startTime: `${dates.yesterday}T20:30:00-03:00`,
+    endTime: `${dates.yesterday}T22:30:00-03:00`,
+    durationMinutes: 120,
+    status: 'FINISHED',
+    priority: 'VIP',
+    source: 'phone',
+    createdAt: `${dates.yesterday}T12:00:00-03:00`,
+    updatedAt: `${dates.yesterday}T22:30:00-03:00`,
+  },
+  {
+    id: 'RES_Y004',
+    tableId: 'TABLE_M7',
+    customer: {
+      name: 'Andrea Lopez',
+      phone: '+54 9 11 5555-4004',
+    },
+    partySize: 2,
+    startTime: `${dates.yesterday}T21:00:00-03:00`,
+    endTime: `${dates.yesterday}T22:30:00-03:00`,
+    durationMinutes: 90,
+    status: 'FINISHED',
+    priority: 'STANDARD',
+    source: 'app',
+    createdAt: `${dates.yesterday}T18:00:00-03:00`,
+    updatedAt: `${dates.yesterday}T22:30:00-03:00`,
+  },
+  {
+    id: 'RES_Y005',
+    tableId: 'TABLE_B3',
+    customer: {
+      name: 'Familia Benitez',
+      phone: '+54 9 11 5555-4005',
+    },
+    partySize: 4,
+    startTime: `${dates.yesterday}T20:15:00-03:00`,
+    endTime: `${dates.yesterday}T21:45:00-03:00`,
+    durationMinutes: 90,
+    status: 'CANCELLED',
+    priority: 'STANDARD',
+    source: 'web',
+    createdAt: `${dates.yesterday}T15:00:00-03:00`,
+    updatedAt: `${dates.yesterday}T19:30:00-03:00`,
+  },
+  //#endregion
+
+  //#region TOMORROW - Confirmed and Pending
+  {
+    id: 'RES_T001',
+    tableId: 'TABLE_M1',
+    customer: {
+      name: 'Antonio Vargas',
+      phone: '+54 9 11 5555-5001',
+      email: 'antonio.v@example.com',
+    },
+    partySize: 2,
+    startTime: `${dates.tomorrow}T12:30:00-03:00`,
+    endTime: `${dates.tomorrow}T14:00:00-03:00`,
+    durationMinutes: 90,
+    status: 'CONFIRMED',
+    priority: 'STANDARD',
+    source: 'web',
+    createdAt: `${baseDate}T18:00:00-03:00`,
+    updatedAt: `${baseDate}T18:00:00-03:00`,
+  },
+  {
+    id: 'RES_T002',
+    tableId: 'TABLE_M4',
+    customer: {
+      name: 'Patricia Medina',
+      phone: '+54 9 11 5555-5002',
+    },
+    partySize: 4,
+    startTime: `${dates.tomorrow}T13:00:00-03:00`,
+    endTime: `${dates.tomorrow}T14:30:00-03:00`,
+    durationMinutes: 90,
+    status: 'PENDING',
+    priority: 'STANDARD',
+    source: 'phone',
+    createdAt: `${baseDate}T16:00:00-03:00`,
+    updatedAt: `${baseDate}T16:00:00-03:00`,
+  },
+  {
+    id: 'RES_T003',
+    tableId: 'TABLE_V2',
+    customer: {
+      name: 'VIP Client Delta',
+      phone: '+54 9 11 5555-5003',
+      email: 'delta@vip.com',
+    },
+    partySize: 4,
+    startTime: `${dates.tomorrow}T20:00:00-03:00`,
+    endTime: `${dates.tomorrow}T22:00:00-03:00`,
+    durationMinutes: 120,
+    status: 'CONFIRMED',
+    priority: 'VIP',
+    source: 'phone',
+    createdAt: `${baseDate}T14:00:00-03:00`,
+    updatedAt: `${baseDate}T14:00:00-03:00`,
+  },
+  {
+    id: 'RES_T004',
+    tableId: 'TABLE_M3',
+    customer: {
+      name: 'Jorge Paz',
+      phone: '+54 9 11 5555-5004',
+    },
+    partySize: 2,
+    startTime: `${dates.tomorrow}T20:15:00-03:00`,
+    endTime: `${dates.tomorrow}T21:45:00-03:00`,
+    durationMinutes: 90,
+    status: 'CONFIRMED',
+    priority: 'STANDARD',
+    source: 'app',
+    createdAt: `${baseDate}T19:00:00-03:00`,
+    updatedAt: `${baseDate}T19:00:00-03:00`,
+  },
+  {
+    id: 'RES_T005',
+    tableId: 'TABLE_G4',
+    customer: {
+      name: 'Corporate Event Ltd',
+      phone: '+54 9 11 5555-5005',
+      email: 'events@corporate.com',
+    },
+    partySize: 10,
+    startTime: `${dates.tomorrow}T20:00:00-03:00`,
+    endTime: `${dates.tomorrow}T22:30:00-03:00`,
+    durationMinutes: 150,
+    status: 'CONFIRMED',
+    priority: 'VIP',
+    source: 'phone',
+    createdAt: `${baseDate}T11:00:00-03:00`,
+    updatedAt: `${baseDate}T11:00:00-03:00`,
+  },
+  //#endregion
 ];
 
 // ============================================================================
 //#region Generator Function for Stress Testing (100+ reservations)
 // ============================================================================
 
-export function generateRandomReservations(count: number): Reservation[] {
+/**
+ * Generates random reservations for stress testing
+ * - All reservations are maximum 60 minutes
+ * - No overlaps on same table
+ * - Latest start time is 22:30
+ * - 70% lunch (11-17h), 30% dinner (19-22:30h)
+ */
+export function generateRandomReservations(
+  count: number,
+  targetDate?: Date,
+  existingReservations: Reservation[] = []
+): Reservation[] {
+  const date = targetDate || new Date();
+  const dateStr = formatDateYYYYMMDD(date);
   const names = [
     'Juan Perez',
     'Ana Lopez',
@@ -656,37 +885,100 @@ export function generateRandomReservations(count: number): Reservation[] {
   const sources: Reservation['source'][] = ['web', 'phone', 'app', 'walkin'];
 
   const result: Reservation[] = [];
+  const allReservations = [...existingReservations];
 
-  for (let i = 0; i < count; i++) {
+  // Helper to check if two reservations overlap
+  const hasOverlap = (
+    start1: string,
+    end1: string,
+    start2: string,
+    end2: string
+  ): boolean => {
+    const s1 = new Date(start1).getTime();
+    const e1 = new Date(end1).getTime();
+    const s2 = new Date(start2).getTime();
+    const e2 = new Date(end2).getTime();
+    return s1 < e2 && s2 < e1;
+  };
+
+  // Helper to check if table is available
+  const isTableAvailable = (
+    tableId: string,
+    startTime: string,
+    endTime: string
+  ): boolean => {
+    return !allReservations.some(
+      (res) =>
+        res.tableId === tableId &&
+        hasOverlap(res.startTime, res.endTime, startTime, endTime)
+    );
+  };
+
+  let attempts = 0;
+  const maxAttempts = count * 20;
+
+  while (result.length < count && attempts < maxAttempts) {
+    attempts++;
+
     const tableId = tables[Math.floor(Math.random() * tables.length)].id;
     const table = tables.find((t: Table) => t.id === tableId)!;
 
-    // Random time between 12:00 and 23:00
-    const isLunch = Math.random() < 0.3;
-    const hour = isLunch
-      ? Math.floor(Math.random() * 4) + 12 // 12-15
-      : Math.floor(Math.random() * 4) + 20; // 20-23
+    // 70% lunch (11-17h), 30% dinner (19-22:30h)
+    const isLunch = Math.random() < 0.7;
 
-    const minutes = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
-    const duration = [60, 90, 90, 120][Math.floor(Math.random() * 4)];
+    let hour: number;
+    let minutes: number;
 
-    const startTime = `${baseDate}T${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00-03:00`;
+    if (isLunch) {
+      // 50% early lunch (11-13h), 50% late lunch (14-17h)
+      const earlyLunch = Math.random() < 0.5;
+      if (earlyLunch) {
+        hour = Math.floor(Math.random() * 3) + 11; // 11-13
+      } else {
+        hour = Math.floor(Math.random() * 4) + 14; // 14-17
+      }
+      minutes = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+    } else {
+      // Dinner: 19:00-22:30 (latest start)
+      const timeSlots = [
+        { hour: 19, minutes: [0, 15, 30, 45] },
+        { hour: 20, minutes: [0, 15, 30, 45] },
+        { hour: 21, minutes: [0, 15, 30, 45] },
+        { hour: 22, minutes: [0, 15, 30] }, // Only 22:00, 22:15, 22:30
+      ];
+      const slot = timeSlots[Math.floor(Math.random() * timeSlots.length)];
+      hour = slot.hour;
+      minutes = slot.minutes[Math.floor(Math.random() * slot.minutes.length)];
+    }
+
+    // Maximum 60 minutes duration
+    const duration = 60;
+
+    const startTime = `${dateStr}T${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00-03:00`;
     const endHour = hour + Math.floor((minutes + duration) / 60);
     const endMinutes = (minutes + duration) % 60;
-    const endTime = `${baseDate}T${endHour.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:00-03:00`;
+    const endTime = `${dateStr}T${endHour.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:00-03:00`;
+
+    // Check if table is available
+    if (!isTableAvailable(tableId, startTime, endTime)) {
+      continue;
+    }
 
     const partySize =
       Math.floor(
         Math.random() * (table.capacity.max - table.capacity.min + 1)
       ) + table.capacity.min;
 
-    result.push({
-      id: `RES_GEN_${(i + 1).toString().padStart(4, '0')}`,
+    const newReservation: Reservation = {
+      id: `RES_GEN_${(result.length + 1).toString().padStart(4, '0')}`,
       tableId,
       customer: {
         name: names[Math.floor(Math.random() * names.length)],
-        phone: `+54 9 11 5555-${(3000 + i).toString().padStart(4, '0')}`,
-        email: Math.random() > 0.3 ? `customer${i}@example.com` : undefined,
+        phone: `+54 9 11 5555-${(3000 + result.length).toString().padStart(4, '0')}`,
+        email:
+          Math.random() > 0.3
+            ? `customer${result.length}@example.com`
+            : undefined,
       },
       partySize,
       startTime,
@@ -695,9 +987,18 @@ export function generateRandomReservations(count: number): Reservation[] {
       status: statuses[Math.floor(Math.random() * statuses.length)],
       priority: priorities[Math.floor(Math.random() * priorities.length)],
       source: sources[Math.floor(Math.random() * sources.length)],
-      createdAt: `${baseDate}T10:00:00-03:00`,
-      updatedAt: `${baseDate}T10:00:00-03:00`,
-    });
+      createdAt: `${dateStr}T10:00:00-03:00`,
+      updatedAt: `${dateStr}T10:00:00-03:00`,
+    };
+
+    result.push(newReservation);
+    allReservations.push(newReservation);
+  }
+
+  if (result.length < count) {
+    console.warn(
+      `Only generated ${result.length} non-overlapping reservations out of ${count} requested.`
+    );
   }
 
   return result;

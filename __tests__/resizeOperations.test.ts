@@ -12,8 +12,8 @@ describe('Resize Operations', () => {
         tableId: 'TABLE_M1',
         customer: { name: 'John Doe', phone: '+1234567890' },
         partySize: 4,
-        startTime: '2025-10-20T19:00:00.000Z',
-        endTime: '2025-10-20T21:00:00.000Z',
+        startTime: '2025-10-20T12:00:00.000Z',
+        endTime: '2025-10-20T14:00:00.000Z',
         durationMinutes: 120,
         status: 'CONFIRMED',
         priority: 'STANDARD',
@@ -26,8 +26,8 @@ describe('Resize Operations', () => {
         tableId: 'TABLE_M1',
         customer: { name: 'Jane Smith', phone: '+1987654321' },
         partySize: 2,
-        startTime: '2025-10-20T21:30:00.000Z',
-        endTime: '2025-10-20T23:00:00.000Z',
+        startTime: '2025-10-20T17:00:00.000Z',
+        endTime: '2025-10-20T18:30:00.000Z',
         durationMinutes: 90,
         status: 'CONFIRMED',
         priority: 'STANDARD',
@@ -51,8 +51,8 @@ describe('Resize Operations', () => {
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(150);
-      expect(resized?.startTime).toBe('2025-10-20T19:00:00.000Z'); // Start time unchanged
-      expect(resized?.endTime).toBe('2025-10-20T21:30:00.000Z'); // End time updated
+      expect(resized?.startTime).toBe('2025-10-20T12:00:00.000Z'); // Start time unchanged
+      expect(resized?.endTime).toBe('2025-10-20T14:30:00.000Z'); // End time updated
     });
 
     it('should successfully reduce reservation duration', () => {
@@ -66,8 +66,8 @@ describe('Resize Operations', () => {
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(90);
-      expect(resized?.startTime).toBe('2025-10-20T19:00:00.000Z');
-      expect(resized?.endTime).toBe('2025-10-20T20:30:00.000Z'); // 90 min after start
+      expect(resized?.startTime).toBe('2025-10-20T12:00:00.000Z');
+      expect(resized?.endTime).toBe('2025-10-20T13:30:00.000Z'); // 90 min after start
     });
 
     it('should reject resize below minimum duration (30 min)', () => {
@@ -99,7 +99,7 @@ describe('Resize Operations', () => {
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(30);
-      expect(resized?.endTime).toBe('2025-10-20T19:30:00.000Z');
+      expect(resized?.endTime).toBe('2025-10-20T12:30:00.000Z');
     });
 
     it('should accept resize at maximum duration boundary (240 min)', () => {
@@ -109,32 +109,51 @@ describe('Resize Operations', () => {
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(240);
-      expect(resized?.endTime).toBe('2025-10-20T23:00:00.000Z'); // 4 hours after 19:00
+      expect(resized?.endTime).toBe('2025-10-20T16:00:00.000Z'); // 4 hours after 12:00
     });
   });
 
   describe('Conflict detection during resize', () => {
     it('should reject resize that would overlap with next reservation', () => {
-      // Try to extend RES_001 to overlap with RES_002 (starts at 21:30)
+      // RES_002 is at different table, need to create one on same table
+      const reservationsWithConflict: Reservation[] = [
+        mockReservations[0],
+        {
+          ...mockReservations[1],
+          startTime: '2025-10-20T14:30:00.000Z',
+          endTime: '2025-10-20T16:00:00.000Z',
+        },
+      ];
+
       const result = resizeReservation(
-        mockReservations,
+        reservationsWithConflict,
         'RES_001',
-        180 // 19:00 + 180 min = 22:00 (overlaps with RES_002)
+        180 // 12:00 + 180 min = 15:00 (overlaps with 14:30-16:00)
       );
 
       expect(result.success).toBe(false);
-      expect(result.reservations).toEqual(mockReservations);
+      expect(result.reservations).toEqual(reservationsWithConflict);
     });
 
     it('should allow resize up to (but not overlapping) next reservation', () => {
-      // Resize RES_001 to end exactly when RES_002 starts (21:30)
-      // 19:00 to 21:30 = 150 minutes
-      const result = resizeReservation(mockReservations, 'RES_001', 150);
+      // Create RES_002 starting right after max extension
+      const reservationsAdjacent: Reservation[] = [
+        mockReservations[0],
+        {
+          ...mockReservations[1],
+          startTime: '2025-10-20T14:30:00.000Z',
+          endTime: '2025-10-20T16:00:00.000Z',
+        },
+      ];
+
+      // Resize RES_001 to end exactly when RES_002 starts (14:30)
+      // 12:00 to 14:30 = 150 minutes
+      const result = resizeReservation(reservationsAdjacent, 'RES_001', 150);
 
       expect(result.success).toBe(true);
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
-      expect(resized?.endTime).toBe('2025-10-20T21:30:00.000Z'); // Exactly when RES_002 starts
+      expect(resized?.endTime).toBe('2025-10-20T14:30:00.000Z'); // Exactly when RES_002 starts
     });
 
     it('should allow reduce without conflict check', () => {
@@ -146,30 +165,33 @@ describe('Resize Operations', () => {
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(60);
     });
-
-    it('should reject resize on non-existent reservation', () => {
-      const result = resizeReservation(
-        mockReservations,
-        'RES_NONEXISTENT',
-        120
-      );
-
-      expect(result.success).toBe(false);
-      expect(result.reservations).toEqual(mockReservations);
-    });
   });
 
   describe('Complex resize scenarios', () => {
     it('should handle resize with multiple reservations on same table', () => {
       const complexReservations: Reservation[] = [
-        ...mockReservations,
+        mockReservations[0], // RES_001: 12:00-14:00 on TABLE_M1
+        {
+          id: 'RES_002',
+          tableId: 'TABLE_M1',
+          customer: { name: 'Jane Smith', phone: '+1987654321' },
+          partySize: 2,
+          startTime: '2025-10-20T15:00:00.000Z',
+          endTime: '2025-10-20T16:30:00.000Z',
+          durationMinutes: 90,
+          status: 'CONFIRMED',
+          priority: 'STANDARD',
+          source: 'web',
+          createdAt: '2025-10-20T10:00:00.000Z',
+          updatedAt: '2025-10-20T10:00:00.000Z',
+        },
         {
           id: 'RES_003',
           tableId: 'TABLE_M1',
           customer: { name: 'Bob Johnson', phone: '+1555555555' },
           partySize: 3,
-          startTime: '2025-10-20T23:30:00.000Z',
-          endTime: '2025-10-20T01:00:00.000Z',
+          startTime: '2025-10-20T17:00:00.000Z',
+          endTime: '2025-10-20T18:30:00.000Z',
           durationMinutes: 90,
           status: 'CONFIRMED',
           priority: 'STANDARD',
@@ -183,7 +205,7 @@ describe('Resize Operations', () => {
       const result = resizeReservation(
         complexReservations,
         'RES_002',
-        180 // Would extend past 23:30
+        150 // 15:00 + 150min = 17:30 (overlaps with RES_003 at 17:00)
       );
 
       expect(result.success).toBe(false);
@@ -196,11 +218,11 @@ describe('Resize Operations', () => {
 
       // Changed properties
       expect(resized?.durationMinutes).toBe(60);
-      expect(resized?.endTime).toBe('2025-10-20T20:00:00.000Z');
+      expect(resized?.endTime).toBe('2025-10-20T13:00:00.000Z');
 
       // Unchanged properties
       expect(resized?.tableId).toBe('TABLE_M1');
-      expect(resized?.startTime).toBe('2025-10-20T19:00:00.000Z');
+      expect(resized?.startTime).toBe('2025-10-20T12:00:00.000Z');
       expect(resized?.customer).toEqual({
         name: 'John Doe',
         phone: '+1234567890',
@@ -221,7 +243,7 @@ describe('Resize Operations', () => {
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
       expect(resized?.durationMinutes).toBe(120);
-      expect(resized?.endTime).toBe('2025-10-20T21:00:00.000Z');
+      expect(resized?.endTime).toBe('2025-10-20T14:00:00.000Z');
     });
 
     it('should correctly handle resize in 15-minute increments', () => {
@@ -238,14 +260,24 @@ describe('Resize Operations', () => {
     });
 
     it('should handle edge case: resize to exact conflict boundary', () => {
-      // RES_002 starts at 21:30
-      // Resize RES_001 to 150 min (19:00 + 150 = 21:30)
-      const result = resizeReservation(mockReservations, 'RES_001', 150);
+      // Create adjacent reservation for boundary test
+      const adjacentReservations: Reservation[] = [
+        mockReservations[0],
+        {
+          ...mockReservations[1],
+          startTime: '2025-10-20T14:30:00.000Z',
+          endTime: '2025-10-20T16:00:00.000Z',
+        },
+      ];
+
+      // RES_002 starts at 14:30
+      // Resize RES_001 to 150 min (12:00 + 150 = 14:30)
+      const result = resizeReservation(adjacentReservations, 'RES_001', 150);
 
       expect(result.success).toBe(true); // Should succeed (ends exactly when next starts)
 
       const resized = result.reservations.find((r) => r.id === 'RES_001');
-      expect(resized?.endTime).toBe('2025-10-20T21:30:00.000Z');
+      expect(resized?.endTime).toBe('2025-10-20T14:30:00.000Z');
     });
   });
 

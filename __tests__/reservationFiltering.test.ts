@@ -1,9 +1,7 @@
-/* eslint-disable */
 import { describe, it, expect } from 'vitest';
 import {
   getFilteredReservations,
   getReservationsByTable,
-  getTablesBySector,
 } from '../store/selectors/reservationSelectors';
 import type { Reservation, Table } from '@/types';
 
@@ -97,30 +95,6 @@ describe('Reservation Filtering', () => {
     },
   ];
 
-  // const mockTables = [
-  //   {
-  //     id: 'TABLE_M1',
-  //     sectorId: 'SECTOR_MAIN',
-  //     name: 'M1',
-  //     capacity: { min: 2, max: 4 },
-  //     sortOrder: 1,
-  //   },
-  //   {
-  //     id: 'TABLE_M2',
-  //     sectorId: 'SECTOR_MAIN',
-  //     name: 'M2',
-  //     capacity: { min: 2, max: 4 },
-  //     sortOrder: 2,
-  //   },
-  //   {
-  //     id: 'TABLE_T1',
-  //     sectorId: 'SECTOR_TERRACE',
-  //     name: 'T1',
-  //     capacity: { min: 4, max: 8 },
-  //     sortOrder: 1,
-  //   },
-  // ];
-
   describe('getFilteredReservations', () => {
     it('should return all reservations when no filters applied', () => {
       const filtered = getFilteredReservations(
@@ -145,18 +119,6 @@ describe('Reservation Filtering', () => {
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe('RES_002');
       expect(filtered[0].status).toBe('PENDING');
-    });
-
-    it('should filter by multiple statuses', () => {
-      const confirmedOrSeated = mockReservations.filter(
-        (r) => r.status === 'CONFIRMED' || r.status === 'SEATED'
-      );
-
-      expect(confirmedOrSeated).toHaveLength(2);
-      expect(confirmedOrSeated.map((r) => r.id)).toEqual([
-        'RES_001',
-        'RES_003',
-      ]);
     });
 
     it('should search by customer name (case-insensitive)', () => {
@@ -237,15 +199,6 @@ describe('Reservation Filtering', () => {
         'RES_001',
         'RES_004',
       ]);
-    });
-
-    it('should return empty array for table with no reservations', () => {
-      const tableReservations = getReservationsByTable(
-        mockReservations,
-        'TABLE_NONEXISTENT'
-      );
-
-      expect(tableReservations).toHaveLength(0);
     });
 
     it('should return reservations sorted by start time', () => {

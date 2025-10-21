@@ -12,6 +12,7 @@ import { getCurrentTime, isSameDay } from '@/lib/utils/dateUtils';
 
 interface CurrentTimeLineProps {
   selectedDate: Date;
+  zoomLevel: number;
 }
 
 /**
@@ -20,10 +21,15 @@ interface CurrentTimeLineProps {
  */
 export default function CurrentTimeLine({
   selectedDate,
+  zoomLevel,
 }: CurrentTimeLineProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
-  // eslint-disable-next-line
   const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true on mount (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Update current time every minute
   useEffect(() => {
@@ -44,7 +50,7 @@ export default function CurrentTimeLine({
     return null;
   }
 
-  const xPosition = timeToX(currentTime, selectedDate);
+  const xPosition = timeToX(currentTime, selectedDate) * zoomLevel;
 
   return (
     <div

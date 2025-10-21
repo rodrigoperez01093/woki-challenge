@@ -151,7 +151,7 @@ describe('Drag & Drop Operations', () => {
       mockReservations,
       'RES_002', // 90 minute reservation
       'TABLE_M1',
-      '2025-10-20T18:00:00.000Z'
+      '2025-10-20T17:00:00.000Z'
     );
 
     expect(result.success).toBe(true);
@@ -160,8 +160,8 @@ describe('Drag & Drop Operations', () => {
       (r) => r.id === 'RES_002'
     );
 
-    expect(movedReservation?.startTime).toBe('2025-10-20T18:00:00.000Z');
-    expect(movedReservation?.endTime).toBe('2025-10-20T19:30:00.000Z'); // +90 minutes
+    expect(movedReservation?.startTime).toBe('2025-10-20T17:00:00.000Z');
+    expect(movedReservation?.endTime).toBe('2025-10-20T18:30:00.000Z'); // +90 minutes
   });
 
   it('should allow moving to same table and time (no-op move)', () => {

@@ -67,6 +67,10 @@ export interface ReservationState {
   setFilters: (filters: Partial<FiltersState>) => void;
   clearFilters: () => void;
 
+  // Actions - Stress Test
+  loadStressTest: (count?: number) => void;
+  clearStressTest: () => void;
+
   // Selectors
   getReservationById: (id: UUID) => Reservation | undefined;
   getReservationsByTable: (tableId: UUID) => Reservation[];
@@ -79,6 +83,20 @@ export interface ReservationState {
     endTime: string,
     excludeReservationId?: UUID
   ) => ConflictCheck;
+
+  // Table Suggestions
+  findBestTables: (
+    partySize: number,
+    startTime: string,
+    durationMinutes: number,
+    sectorPreference?: UUID
+  ) => import('../utils/tableSuggestions').TableSuggestion[];
+  findNextAvailableSlots: (
+    partySize: number,
+    desiredStartTime: string,
+    durationMinutes: number,
+    sectorPreference?: UUID
+  ) => import('../utils/tableSuggestions').TimeSlotSuggestion[];
 
   // Utilities
   resetToSeedData: () => void;

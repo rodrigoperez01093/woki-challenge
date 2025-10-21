@@ -7,11 +7,13 @@ import {
   DragStartEvent,
   DragOverlay,
   DragMoveEvent,
-  PointerSensor,
+  TouchSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   MeasuringStrategy,
 } from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useReservationStore } from '@/store/useReservationStore';
 import TimelineHeader from './TimelineHeader';
 import TimelineBody from './TimelineBody';
@@ -20,11 +22,11 @@ import CurrentTimeLine from './CurrentTimeLine';
 import ReservationBlock from './ReservationBlock';
 import {
   HEADER_HEIGHT,
-  SIDEBAR_WIDTH,
   ROW_HEIGHT,
   MIN_RESERVATION_DURATION,
   MAX_RESERVATION_DURATION,
   SLOT_WIDTH,
+  START_HOUR,
 } from '@/lib/constants';
 import { xToTime, snapToSlot, timeToX } from '@/lib/utils/coordinateUtils';
 import { createISODateTime } from '@/lib/utils/dateUtils';
@@ -75,11 +77,19 @@ export default function Timeline() {
   );
   const checkConflict = useReservationStore((state) => state.checkConflict);
 
-  // Configure drag sensors
+  // Configure drag sensors for both mouse and touch
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    // Mouse sensor for desktop
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 5, // Require 5px movement before drag starts
+      },
+    }),
+    // Touch sensor for mobile devices
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms delay before drag starts (helps distinguish from scrolling)
+        tolerance: 5, // 5px movement tolerance
       },
     })
   );
@@ -146,6 +156,30 @@ export default function Timeline() {
       setHasConflict(false);
       return;
     }
+
+    // Helper to check if end time exceeds closing hour (midnight)
+    const exceedsClosingTime = (
+      startTime: Date,
+      durationMinutes: number
+    ): boolean => {
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + durationMinutes);
+
+      // Check if endTime is on a different day (crossed midnight)
+      const startDate = new Date(startTime);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(endTime);
+      endDate.setHours(0, 0, 0, 0);
+
+      // If dates are different, it crossed midnight
+      return startDate.getTime() !== endDate.getTime();
+    };
+
+    // Helper to check if start time is before opening hour (11:00)
+    const beforeOpeningTime = (startTime: Date): boolean => {
+      const hour = startTime.getHours();
+      return hour < START_HOUR;
+    };
 
     // Handle resize
     if (isResizing) {
@@ -214,6 +248,11 @@ export default function Timeline() {
         endTimeForConflictCheck.getMinutes() + newDuration
       );
 
+      // Check if exceeds closing time or starts before opening
+      const startTimeDate = new Date(newStartTime);
+      const exceedsClosing = exceedsClosingTime(startTimeDate, newDuration);
+      const beforeOpening = beforeOpeningTime(startTimeDate);
+
       const conflict = checkConflict(
         activeReservation.tableId,
         newStartTime,
@@ -221,7 +260,7 @@ export default function Timeline() {
         activeReservation.id
       );
 
-      setHasConflict(conflict.hasConflict);
+      setHasConflict(conflict.hasConflict || exceedsClosing || beforeOpening);
       return;
     }
 
@@ -278,6 +317,20 @@ export default function Timeline() {
       newEndTime.getMinutes()
     );
 
+    // Check if reservation exceeds closing time or starts before opening
+    const exceedsClosing = exceedsClosingTime(
+      newStartTime,
+      activeReservation.durationMinutes
+    );
+    const beforeOpening = beforeOpeningTime(newStartTime);
+
+    // Check if party size is compatible with target table
+    const targetTable = tables.find((t) => t.id === targetTableId);
+    const capacityMismatch = targetTable
+      ? activeReservation.partySize < targetTable.capacity.min ||
+        activeReservation.partySize > targetTable.capacity.max
+      : false;
+
     // Check for conflicts
     const conflict = checkConflict(
       targetTableId,
@@ -286,7 +339,12 @@ export default function Timeline() {
       activeReservation.id
     );
 
-    setHasConflict(conflict.hasConflict);
+    setHasConflict(
+      conflict.hasConflict ||
+        exceedsClosing ||
+        beforeOpening ||
+        capacityMismatch
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -299,6 +357,47 @@ export default function Timeline() {
 
     // Handle resize end
     if (isResizing && resizePreviewDuration !== null) {
+      // Check if exceeds closing time or starts before opening
+      const startTimeToCheck =
+        resizePreviewStartTime || activeReservation.startTime;
+      const startDate = new Date(startTimeToCheck);
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + resizePreviewDuration);
+
+      // Check if crossed midnight
+      const startDateOnly = new Date(startDate);
+      startDateOnly.setHours(0, 0, 0, 0);
+      const endDateOnly = new Date(endDate);
+      endDateOnly.setHours(0, 0, 0, 0);
+      const exceedsClosing = startDateOnly.getTime() !== endDateOnly.getTime();
+
+      // Check if starts before opening hour
+      const beforeOpening = startDate.getHours() < START_HOUR;
+
+      if (exceedsClosing) {
+        toast.error(
+          'No se puede redimensionar: la reserva terminaría después del horario de cierre (00:00)'
+        );
+        setActiveReservation(null);
+        setIsResizing(null);
+        setResizePreviewDuration(null);
+        setResizePreviewStartTime(null);
+        setHasConflict(false);
+        return;
+      }
+
+      if (beforeOpening) {
+        toast.error(
+          'No se puede redimensionar: la reserva empezaría antes del horario de apertura (11:00)'
+        );
+        setActiveReservation(null);
+        setIsResizing(null);
+        setResizePreviewDuration(null);
+        setResizePreviewStartTime(null);
+        setHasConflict(false);
+        return;
+      }
+
       // Check if there's a conflict before applying
       if (hasConflict) {
         toast.error('No se puede redimensionar: conflicto con otra reserva');
@@ -407,6 +506,59 @@ export default function Timeline() {
       newStartTime.getMinutes()
     );
 
+    // Check if reservation would exceed closing time (cross midnight)
+    const exceedsClosing = (() => {
+      const endTime = new Date(newStartTime);
+      endTime.setMinutes(
+        endTime.getMinutes() + activeReservation.durationMinutes
+      );
+
+      // Check if crossed midnight
+      const startDateOnly = new Date(newStartTime);
+      startDateOnly.setHours(0, 0, 0, 0);
+      const endDateOnly = new Date(endTime);
+      endDateOnly.setHours(0, 0, 0, 0);
+
+      return startDateOnly.getTime() !== endDateOnly.getTime();
+    })();
+
+    // Check if reservation starts before opening hour
+    const beforeOpening = newStartTime.getHours() < START_HOUR;
+
+    if (exceedsClosing) {
+      toast.error(
+        'No se puede mover: la reserva terminaría después del horario de cierre (00:00)'
+      );
+      setActiveReservation(null);
+      setHasConflict(false);
+      return;
+    }
+
+    if (beforeOpening) {
+      toast.error(
+        'No se puede mover: la reserva empezaría antes del horario de apertura (11:00)'
+      );
+      setActiveReservation(null);
+      setHasConflict(false);
+      return;
+    }
+
+    // Check if party size is compatible with target table
+    const targetTable = tables.find((t) => t.id === targetTableId);
+    if (targetTable) {
+      const partySize = activeReservation.partySize;
+      const { min, max } = targetTable.capacity;
+
+      if (partySize < min || partySize > max) {
+        toast.error(
+          `No se puede mover: la mesa tiene capacidad para ${max} personas, pero la reserva es para ${partySize} personas`
+        );
+        setActiveReservation(null);
+        setHasConflict(false);
+        return;
+      }
+    }
+
     // Update reservation
     const success = moveReservation(
       reservationId,
@@ -431,6 +583,7 @@ export default function Timeline() {
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      modifiers={[restrictToWindowEdges]}
     >
       <div className="flex h-full flex-col overflow-hidden bg-white">
         {/* Header row with time slots */}
@@ -438,11 +591,8 @@ export default function Timeline() {
           className="flex border-b-2 border-gray-200"
           style={{ height: `${HEADER_HEIGHT}px` }}
         >
-          {/* Empty corner space above sidebar */}
-          <div
-            className="shrink-0 border-r-2 border-gray-200 bg-gray-50"
-            style={{ width: `${SIDEBAR_WIDTH}px` }}
-          />
+          {/* Empty corner space above sidebar - responsive width */}
+          <div className="w-[100px] shrink-0 border-r-2 border-gray-200 bg-gray-50 md:w-[220px]" />
 
           {/* Time header (scrollable horizontally) */}
           <TimelineHeader ref={timeHeaderRef} zoomLevel={zoomLevel} />
@@ -457,13 +607,17 @@ export default function Timeline() {
           <div className="relative flex-1 overflow-auto" ref={gridBodyRef}>
             <TimelineBody
               zoomLevel={zoomLevel}
+              scrollContainerRef={gridBodyRef}
               onEditReservation={setEditingReservation}
               onContextMenu={(reservation, x, y) =>
                 setContextMenu({ reservation, x, y })
               }
               onEmptySlotClick={handleEmptySlotClick}
             />
-            <CurrentTimeLine selectedDate={selectedDate} />
+            <CurrentTimeLine
+              selectedDate={selectedDate}
+              zoomLevel={zoomLevel}
+            />
           </div>
         </div>
       </div>
@@ -471,20 +625,16 @@ export default function Timeline() {
       {/* Drag Overlay - shows preview while dragging */}
       <DragOverlay dropAnimation={null}>
         {activeReservation ? (
-          <div
-            className={`
-              transition-all
-              ${hasConflict ? 'opacity-80 ring-4 ring-red-500' : 'opacity-80'}
-            `}
-          >
+          <div className="transition-all" style={{ opacity: 0.8 }}>
             <ReservationBlock
               reservation={activeReservation}
               zoomLevel={zoomLevel}
               isOverlay
+              hasConflict={hasConflict}
             />
             {hasConflict && (
               <div className="absolute -bottom-8 left-0 right-0 rounded bg-red-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-lg">
-                ⚠ Conflicto detectado
+                ⚠ Espacio no disponible
               </div>
             )}
           </div>
