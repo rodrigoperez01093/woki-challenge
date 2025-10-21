@@ -30,9 +30,21 @@ export function moveReservation(
     reservation.durationMinutes
   );
 
+  // Filter reservations to only include those on the same date as newStartTime
+  // This prevents false conflicts when we have reservations across multiple days
+  const newStartDate = new Date(newStartTime);
+  const reservationsOnDate = reservations.filter((res) => {
+    const resDate = new Date(res.startTime);
+    return (
+      resDate.getFullYear() === newStartDate.getFullYear() &&
+      resDate.getMonth() === newStartDate.getMonth() &&
+      resDate.getDate() === newStartDate.getDate()
+    );
+  });
+
   // Check for conflicts (excluding current reservation)
   const conflict = checkConflict(
-    reservations,
+    reservationsOnDate,
     newTableId,
     newStartTime,
     newEndTime,
@@ -88,9 +100,21 @@ export function resizeReservation(
     newDurationMinutes
   );
 
+  // Filter reservations to only include those on the same date
+  // This prevents false conflicts when we have reservations across multiple days
+  const startDate = new Date(reservation.startTime);
+  const reservationsOnDate = reservations.filter((res) => {
+    const resDate = new Date(res.startTime);
+    return (
+      resDate.getFullYear() === startDate.getFullYear() &&
+      resDate.getMonth() === startDate.getMonth() &&
+      resDate.getDate() === startDate.getDate()
+    );
+  });
+
   // Check for conflicts
   const conflict = checkConflict(
-    reservations,
+    reservationsOnDate,
     reservation.tableId,
     reservation.startTime,
     newEndTime,

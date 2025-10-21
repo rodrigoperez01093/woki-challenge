@@ -119,14 +119,24 @@ function TableRow({
 
 // Memoize component - only re-render if props change
 export default memo(TableRow, (prevProps, nextProps) => {
-  // Custom comparison - only re-render if these change
-  return (
-    prevProps.table.id === nextProps.table.id &&
-    prevProps.zoomLevel === nextProps.zoomLevel &&
-    prevProps.rowHeight === nextProps.rowHeight &&
-    prevProps.reservations.length === nextProps.reservations.length &&
-    prevProps.reservations.every(
-      (r, i) => r.id === nextProps.reservations[i]?.id
-    )
-  );
+  // Custom comparison - return true if equal (skip re-render), false if changed
+  if (
+    prevProps.table.id !== nextProps.table.id ||
+    prevProps.zoomLevel !== nextProps.zoomLevel ||
+    prevProps.rowHeight !== nextProps.rowHeight ||
+    prevProps.reservations.length !== nextProps.reservations.length
+  ) {
+    return false; // Props changed, re-render
+  }
+
+  // Check if any reservation changed (not just IDs, but also content)
+  return prevProps.reservations.every((r, i) => {
+    const nextR = nextProps.reservations[i];
+    return (
+      r.id === nextR?.id &&
+      r.startTime === nextR?.startTime &&
+      r.durationMinutes === nextR?.durationMinutes &&
+      r.status === nextR?.status
+    );
+  });
 });

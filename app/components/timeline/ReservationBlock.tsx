@@ -282,9 +282,11 @@ function ReservationBlock({
 
 // Memoize component - only re-render if props change
 export default memo(ReservationBlock, (prevProps, nextProps) => {
-  // Custom comparison - only re-render if these change
+  // Custom comparison - return true if props are equal (skip re-render)
+  // return false if props changed (trigger re-render)
   return (
     prevProps.reservation.id === nextProps.reservation.id &&
+    prevProps.reservation.tableId === nextProps.reservation.tableId &&
     prevProps.zoomLevel === nextProps.zoomLevel &&
     prevProps.isOverlay === nextProps.isOverlay &&
     prevProps.hasConflict === nextProps.hasConflict &&

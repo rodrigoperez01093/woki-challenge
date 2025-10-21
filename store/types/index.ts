@@ -84,6 +84,20 @@ export interface ReservationState {
     excludeReservationId?: UUID
   ) => ConflictCheck;
 
+  // Table Suggestions
+  findBestTables: (
+    partySize: number,
+    startTime: string,
+    durationMinutes: number,
+    sectorPreference?: UUID
+  ) => import('../utils/tableSuggestions').TableSuggestion[];
+  findNextAvailableSlots: (
+    partySize: number,
+    desiredStartTime: string,
+    durationMinutes: number,
+    sectorPreference?: UUID
+  ) => import('../utils/tableSuggestions').TimeSlotSuggestion[];
+
   // Utilities
   resetToSeedData: () => void;
 }

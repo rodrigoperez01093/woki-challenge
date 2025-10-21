@@ -324,6 +324,13 @@ export default function Timeline() {
     );
     const beforeOpening = beforeOpeningTime(newStartTime);
 
+    // Check if party size is compatible with target table
+    const targetTable = tables.find((t) => t.id === targetTableId);
+    const capacityMismatch = targetTable
+      ? activeReservation.partySize < targetTable.capacity.min ||
+        activeReservation.partySize > targetTable.capacity.max
+      : false;
+
     // Check for conflicts
     const conflict = checkConflict(
       targetTableId,
@@ -332,7 +339,12 @@ export default function Timeline() {
       activeReservation.id
     );
 
-    setHasConflict(conflict.hasConflict || exceedsClosing || beforeOpening);
+    setHasConflict(
+      conflict.hasConflict ||
+        exceedsClosing ||
+        beforeOpening ||
+        capacityMismatch
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -529,6 +541,22 @@ export default function Timeline() {
       setActiveReservation(null);
       setHasConflict(false);
       return;
+    }
+
+    // Check if party size is compatible with target table
+    const targetTable = tables.find((t) => t.id === targetTableId);
+    if (targetTable) {
+      const partySize = activeReservation.partySize;
+      const { min, max } = targetTable.capacity;
+
+      if (partySize < min || partySize > max) {
+        toast.error(
+          `No se puede mover: la mesa tiene capacidad para ${max} personas, pero la reserva es para ${partySize} personas`
+        );
+        setActiveReservation(null);
+        setHasConflict(false);
+        return;
+      }
     }
 
     // Update reservation

@@ -10,6 +10,7 @@ import {
   DEFAULT_RESERVATION_DURATION,
 } from '@/lib/constants';
 import { createISODateTime, formatDate } from '@/lib/utils/dateUtils';
+import TableSuggestions from './TableSuggestions';
 
 interface CreateReservationModalProps {
   isOpen: boolean;
@@ -392,6 +393,38 @@ export default function CreateReservationModal({
                       <option value="180">180 min</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Table Suggestions */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <h3 className="mb-3 text-sm font-semibold text-gray-900">
+                    Sugerencias de mesas
+                  </h3>
+                  <TableSuggestions
+                    partySize={formData.partySize}
+                    startTime={
+                      new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate(),
+                        formData.startHour,
+                        formData.startMinute
+                      )
+                    }
+                    durationMinutes={formData.durationMinutes}
+                    selectedTableId={formData.tableId}
+                    onSelectTable={(tableId) =>
+                      setFormData({ ...formData, tableId })
+                    }
+                    onSelectTimeSlot={(newStartTime, tableId) => {
+                      setFormData({
+                        ...formData,
+                        tableId,
+                        startHour: newStartTime.getHours(),
+                        startMinute: newStartTime.getMinutes(),
+                      });
+                    }}
+                  />
                 </div>
 
                 {/* Status and Priority */}

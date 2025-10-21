@@ -43,6 +43,12 @@ import {
 
 // Utils
 import { checkConflict as checkConflictUtil } from './utils/conflictDetection';
+import {
+  findBestTables,
+  findNextAvailableSlots,
+  type TableSuggestion,
+  type TimeSlotSuggestion,
+} from './utils/tableSuggestions';
 import { ReservationState, FiltersState } from './types';
 
 //#region Store
@@ -128,8 +134,34 @@ export const useReservationStore = create<ReservationState>()(
         newTableId: UUID,
         newStartTime: string
       ): boolean => {
+        const state = get();
+        const reservation = state.reservations.find((r) => r.id === id);
+        const targetTable = state.tables.find((t) => t.id === newTableId);
+
+        if (!reservation) {
+          console.warn('Reservation not found:', id);
+          return false;
+        }
+
+        if (!targetTable) {
+          console.warn('Target table not found:', newTableId);
+          return false;
+        }
+
+        // Validate party size fits in target table capacity
+        if (
+          reservation.partySize < targetTable.capacity.min ||
+          reservation.partySize > targetTable.capacity.max
+        ) {
+          console.warn('Party size incompatible with table capacity:', {
+            partySize: reservation.partySize,
+            tableCapacity: targetTable.capacity,
+          });
+          return false;
+        }
+
         const result = moveReservationAction(
-          get().reservations,
+          state.reservations,
           id,
           newTableId,
           newStartTime
@@ -300,6 +332,42 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
+      // Table Suggestions
+      // ========================================================================
+
+      findBestTables: (
+        partySize: number,
+        startTime: string,
+        durationMinutes: number,
+        sectorPreference?: UUID
+      ): TableSuggestion[] => {
+        return findBestTables(
+          get().tables,
+          get().reservations,
+          partySize,
+          startTime,
+          durationMinutes,
+          sectorPreference
+        );
+      },
+
+      findNextAvailableSlots: (
+        partySize: number,
+        desiredStartTime: string,
+        durationMinutes: number,
+        sectorPreference?: UUID
+      ): TimeSlotSuggestion[] => {
+        return findNextAvailableSlots(
+          get().tables,
+          get().reservations,
+          partySize,
+          desiredStartTime,
+          durationMinutes,
+          sectorPreference
+        );
+      },
+
+      // ========================================================================
       // Utilities
       // ========================================================================
 
@@ -336,3 +404,9 @@ export const useSelectedReservations = () =>
       state.selectedReservationIds.includes(res.id)
     )
   );
+
+// Export types for table suggestions
+export type {
+  TableSuggestion,
+  TimeSlotSuggestion,
+} from './utils/tableSuggestions';
