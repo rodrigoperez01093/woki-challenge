@@ -278,8 +278,20 @@ export const useReservationStore = create<ReservationState>()(
         endTime: string,
         excludeReservationId?: UUID
       ): ConflictCheck => {
+        // Filter reservations to only include those on the same date as startTime
+        // This prevents false conflicts when we have reservations across multiple days
+        const startDate = new Date(startTime);
+        const reservationsOnDate = get().reservations.filter((res) => {
+          const resDate = new Date(res.startTime);
+          return (
+            resDate.getFullYear() === startDate.getFullYear() &&
+            resDate.getMonth() === startDate.getMonth() &&
+            resDate.getDate() === startDate.getDate()
+          );
+        });
+
         return checkConflictUtil(
-          get().reservations,
+          reservationsOnDate,
           tableId,
           startTime,
           endTime,

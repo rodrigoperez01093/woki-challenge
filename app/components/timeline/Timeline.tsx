@@ -7,7 +7,8 @@ import {
   DragStartEvent,
   DragOverlay,
   DragMoveEvent,
-  PointerSensor,
+  TouchSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   MeasuringStrategy,
@@ -76,11 +77,19 @@ export default function Timeline() {
   );
   const checkConflict = useReservationStore((state) => state.checkConflict);
 
-  // Configure drag sensors
+  // Configure drag sensors for both mouse and touch
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    // Mouse sensor for desktop
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 5, // Require 5px movement before drag starts
+      },
+    }),
+    // Touch sensor for mobile devices
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms delay before drag starts (helps distinguish from scrolling)
+        tolerance: 5, // 5px movement tolerance
       },
     })
   );
