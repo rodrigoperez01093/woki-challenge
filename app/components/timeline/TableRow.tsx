@@ -6,6 +6,7 @@ import { GRID_LINE_COLORS, SLOT_WIDTH, TOTAL_SLOTS } from '@/lib/constants';
 import { xToTime } from '@/lib/utils/coordinateUtils';
 import { useReservationStore } from '@/store/useReservationStore';
 import ReservationBlock from './ReservationBlock';
+import { memo, useMemo } from 'react';
 
 interface TableRowProps {
   table: Table;
@@ -17,7 +18,7 @@ interface TableRowProps {
   onEmptySlotClick?: (tableId: string, clickTime: Date) => void;
 }
 
-export default function TableRow({
+function TableRow({
   table,
   reservations,
   zoomLevel,
@@ -39,16 +40,19 @@ export default function TableRow({
   const scaledSlotWidth = SLOT_WIDTH * zoomLevel;
   const totalWidth = TOTAL_SLOTS * scaledSlotWidth;
 
-  const gridCells = Array.from({ length: TOTAL_SLOTS }, (_, i) => {
-    const isHour = i % 4 === 0;
-    const isHalfHour = i % 2 === 0;
+  // Memoize grid cells - only recreate when zoomLevel changes
+  const gridCells = useMemo(() => {
+    return Array.from({ length: TOTAL_SLOTS }, (_, i) => {
+      const isHour = i % 4 === 0;
+      const isHalfHour = i % 2 === 0;
 
-    return {
-      index: i,
-      isHour,
-      isHalfHour,
-    };
-  });
+      return {
+        index: i,
+        isHour,
+        isHalfHour,
+      };
+    });
+  }, []); // Grid cells never change
 
   const handleRowClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only handle clicks directly on the row (not on reservation blocks)
@@ -112,3 +116,17 @@ export default function TableRow({
     </div>
   );
 }
+
+// Memoize component - only re-render if props change
+export default memo(TableRow, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these change
+  return (
+    prevProps.table.id === nextProps.table.id &&
+    prevProps.zoomLevel === nextProps.zoomLevel &&
+    prevProps.rowHeight === nextProps.rowHeight &&
+    prevProps.reservations.length === nextProps.reservations.length &&
+    prevProps.reservations.every(
+      (r, i) => r.id === nextProps.reservations[i]?.id
+    )
+  );
+});

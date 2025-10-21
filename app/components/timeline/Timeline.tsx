@@ -21,7 +21,6 @@ import CurrentTimeLine from './CurrentTimeLine';
 import ReservationBlock from './ReservationBlock';
 import {
   HEADER_HEIGHT,
-  SIDEBAR_WIDTH,
   ROW_HEIGHT,
   MIN_RESERVATION_DURATION,
   MAX_RESERVATION_DURATION,
@@ -555,11 +554,8 @@ export default function Timeline() {
           className="flex border-b-2 border-gray-200"
           style={{ height: `${HEADER_HEIGHT}px` }}
         >
-          {/* Empty corner space above sidebar */}
-          <div
-            className="shrink-0 border-r-2 border-gray-200 bg-gray-50"
-            style={{ width: `${SIDEBAR_WIDTH}px` }}
-          />
+          {/* Empty corner space above sidebar - responsive width */}
+          <div className="w-[100px] shrink-0 border-r-2 border-gray-200 bg-gray-50 md:w-[220px]" />
 
           {/* Time header (scrollable horizontally) */}
           <TimelineHeader ref={timeHeaderRef} zoomLevel={zoomLevel} />
@@ -574,13 +570,17 @@ export default function Timeline() {
           <div className="relative flex-1 overflow-auto" ref={gridBodyRef}>
             <TimelineBody
               zoomLevel={zoomLevel}
+              scrollContainerRef={gridBodyRef}
               onEditReservation={setEditingReservation}
               onContextMenu={(reservation, x, y) =>
                 setContextMenu({ reservation, x, y })
               }
               onEmptySlotClick={handleEmptySlotClick}
             />
-            <CurrentTimeLine selectedDate={selectedDate} />
+            <CurrentTimeLine
+              selectedDate={selectedDate}
+              zoomLevel={zoomLevel}
+            />
           </div>
         </div>
       </div>
@@ -588,16 +588,12 @@ export default function Timeline() {
       {/* Drag Overlay - shows preview while dragging */}
       <DragOverlay dropAnimation={null}>
         {activeReservation ? (
-          <div
-            className={`
-              transition-all
-              ${hasConflict ? 'opacity-80 ring-4 ring-red-500' : 'opacity-80'}
-            `}
-          >
+          <div className="transition-all" style={{ opacity: 0.8 }}>
             <ReservationBlock
               reservation={activeReservation}
               zoomLevel={zoomLevel}
               isOverlay
+              hasConflict={hasConflict}
             />
             {hasConflict && (
               <div className="absolute -bottom-8 left-0 right-0 rounded bg-red-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-lg">

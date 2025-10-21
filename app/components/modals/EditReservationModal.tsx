@@ -169,7 +169,7 @@ export default function EditReservationModal({
           <div className="fixed inset-0 bg-black/30" />
         </Transition.Child>
 
-        <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4">
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -179,9 +179,9 @@ export default function EditReservationModal({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl text-black">
-              <div className="mb-4 flex items-center justify-between">
-                <Dialog.Title className="text-2xl font-bold text-gray-900">
+            <Dialog.Panel className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 text-black shadow-xl md:p-6">
+              <div className="mb-3 flex items-center justify-between md:mb-4">
+                <Dialog.Title className="text-xl font-bold text-gray-900 md:text-2xl">
                   Editar Reserva
                 </Dialog.Title>
                 <button
@@ -199,39 +199,41 @@ export default function EditReservationModal({
                 </div>
 
                 {/* Quick Status Change */}
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
                   <span className="text-sm font-medium text-gray-700">
                     Estado rápido:
                   </span>
-                  {(
-                    [
-                      'PENDING',
-                      'CONFIRMED',
-                      'SEATED',
-                      'FINISHED',
-                      'NO_SHOW',
-                      'CANCELLED',
-                    ] as const
-                  ).map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => {
-                        changeReservationStatus(reservation.id, status);
-                        setFormData({ ...formData, status });
-                      }}
-                      className={`
-                        rounded px-2 py-1 text-xs font-medium transition-colors
-                        ${
-                          formData.status === status
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }
-                      `}
-                    >
-                      {STATUS_LABELS[status]}
-                    </button>
-                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        'PENDING',
+                        'CONFIRMED',
+                        'SEATED',
+                        'FINISHED',
+                        'NO_SHOW',
+                        'CANCELLED',
+                      ] as const
+                    ).map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => {
+                          changeReservationStatus(reservation.id, status);
+                          setFormData({ ...formData, status });
+                        }}
+                        className={`
+                          rounded px-2 py-1 text-xs font-medium transition-colors
+                          ${
+                            formData.status === status
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }
+                        `}
+                      >
+                        {STATUS_LABELS[status]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Table Selection */}
@@ -268,8 +270,8 @@ export default function EditReservationModal({
                 </div>
 
                 {/* Customer Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Nombre del cliente *
                     </label>
@@ -291,7 +293,7 @@ export default function EditReservationModal({
                     )}
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Teléfono *
                     </label>
@@ -363,8 +365,8 @@ export default function EditReservationModal({
                 </div>
 
                 {/* Time and Duration */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Hora
                     </label>
@@ -383,7 +385,7 @@ export default function EditReservationModal({
                     />
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Minutos
                     </label>
@@ -404,7 +406,7 @@ export default function EditReservationModal({
                     </select>
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Duración (min)
                     </label>

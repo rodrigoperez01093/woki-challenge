@@ -1,7 +1,7 @@
 'use client';
 
 import { useReservationStore } from '@/store/useReservationStore';
-import { SIDEBAR_WIDTH, ROW_HEIGHT } from '@/lib/constants';
+import { ROW_HEIGHT } from '@/lib/constants';
 import SectorGroup from './SectorGroup';
 
 /**
@@ -18,10 +18,7 @@ export default function TimelineSidebar() {
   );
 
   return (
-    <div
-      className="shrink-0 overflow-y-auto border-r-2 border-gray-200 bg-gray-50"
-      style={{ width: `${SIDEBAR_WIDTH}px` }}
-    >
+    <div className="w-[100px] shrink-0 overflow-y-auto border-r-2 border-gray-200 bg-gray-50 md:w-[220px]">
       {sectors.map((sector) => {
         const sectorTables = tables.filter((t) => t.sectorId === sector.id);
         const isCollapsed = collapsedSectorIds.includes(sector.id);

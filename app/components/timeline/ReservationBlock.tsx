@@ -12,19 +12,22 @@ import {
 import { timeToX, durationToWidth } from '@/lib/utils/coordinateUtils';
 import { formatTimeRange } from '@/lib/utils/dateUtils';
 import { useReservationStore } from '@/store/useReservationStore';
+import { memo, useMemo } from 'react';
 
 interface ReservationBlockProps {
   reservation: Reservation;
   zoomLevel: number;
   isOverlay?: boolean;
+  hasConflict?: boolean;
   onEdit?: (reservation: Reservation) => void;
   onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
 }
 
-export default function ReservationBlock({
+function ReservationBlock({
   reservation,
   zoomLevel,
   isOverlay,
+  hasConflict,
   onEdit,
   onContextMenu,
 }: ReservationBlockProps) {
@@ -91,25 +94,57 @@ export default function ReservationBlock({
 
   const isSelected = selectedReservationIds.includes(reservation.id);
 
-  // position and size
-  const startTime = new Date(reservation.startTime);
+  // Memoize card scale calculation
+  const cardScale = useMemo(() => {
+    if (zoomLevel > 1) {
+      // Para zoom > 1, aplicar solo 75% del zoom adicional
+      // zoom 1.5 → 1 + (0.5 * 0.75) = 1.125
+      return 1 + (zoomLevel - 1) * 0.75;
+    }
+    return zoomLevel;
+  }, [zoomLevel]);
 
-  const reservationDate = new Date(reservation.startTime);
-  reservationDate.setHours(0, 0, 0, 0);
+  // Memoize position and size calculations
+  const { left, width } = useMemo(() => {
+    const startTime = new Date(reservation.startTime);
+    const reservationDate = new Date(reservation.startTime);
+    reservationDate.setHours(0, 0, 0, 0);
 
-  const left = timeToX(startTime, reservationDate) * zoomLevel;
-  const width = durationToWidth(reservation.durationMinutes);
+    return {
+      left: timeToX(startTime, reservationDate) * zoomLevel,
+      width: durationToWidth(reservation.durationMinutes) * zoomLevel,
+    };
+  }, [reservation.startTime, reservation.durationMinutes, zoomLevel]);
 
-  const statusColors = STATUS_COLORS[reservation.status];
-  const priorityStyles = PRIORITY_STYLES[reservation.priority];
+  // Memoize status colors and priority styles
+  const statusColors = useMemo(
+    () => STATUS_COLORS[reservation.status],
+    [reservation.status]
+  );
+  const priorityStyles = useMemo(
+    () => PRIORITY_STYLES[reservation.priority],
+    [reservation.priority]
+  );
 
-  // Tooltip content
-  const tooltipContent =
-    `${reservation.customer.name} - ${reservation.partySize} personas
+  // Memoize tooltip content
+  const tooltipContent = useMemo(
+    () =>
+      `${reservation.customer.name} - ${reservation.partySize} personas
   ${formatTimeRange(reservation.startTime, reservation.endTime)} (${reservation.durationMinutes} min)
   Estado: ${reservation.status}
   ${reservation.customer.phone ? `Tel: ${reservation.customer.phone}` : ''}
-  ${reservation.notes ? `Notas: ${reservation.notes}` : ''}`.trim();
+  ${reservation.notes ? `Notas: ${reservation.notes}` : ''}`.trim(),
+    [
+      reservation.customer.name,
+      reservation.customer.phone,
+      reservation.partySize,
+      reservation.startTime,
+      reservation.endTime,
+      reservation.durationMinutes,
+      reservation.status,
+      reservation.notes,
+    ]
+  );
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -139,8 +174,8 @@ export default function ReservationBlock({
   const style = isOverlay
     ? {
         transform: transform
-          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
-          : `scale(${zoomLevel})`,
+          ? `${CSS.Translate.toString(transform)} scaleY(${cardScale})`
+          : `scaleY(${cardScale})`,
         transformOrigin: 'left top',
         zIndex: Z_INDEX.RESERVATION_DRAGGING,
       }
@@ -151,8 +186,8 @@ export default function ReservationBlock({
         top: `${RESERVATION_VERTICAL_GAP}px`,
         bottom: `${RESERVATION_VERTICAL_GAP}px`,
         transform: transform
-          ? `${CSS.Translate.toString(transform)} scale(${zoomLevel})`
-          : `scale(${zoomLevel})`,
+          ? `${CSS.Translate.toString(transform)} scaleY(${cardScale})`
+          : `scaleY(${cardScale})`,
         transformOrigin: 'left top',
         zIndex: isDragging
           ? Z_INDEX.RESERVATION_DRAGGING
@@ -166,7 +201,13 @@ export default function ReservationBlock({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        ...(hasConflict &&
+          isOverlay && {
+            boxShadow: '0 0 0 4px rgb(239 68 68)',
+          }),
+      }}
       {...combinedListeners}
       {...attributes}
       title={tooltipContent}
@@ -211,7 +252,7 @@ export default function ReservationBlock({
             title="Arrastrar para cambiar hora de inicio"
             className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
             style={{
-              transform: `scale(${1 / zoomLevel})`,
+              transform: `scaleY(${1 / cardScale})`,
               transformOrigin: 'left center',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -226,7 +267,7 @@ export default function ReservationBlock({
             title="Arrastrar para extender duración"
             className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-blue-500/40 hover:w-3 transition-all duration-200 z-10 group"
             style={{
-              transform: `scale(${1 / zoomLevel})`,
+              transform: `scaleY(${1 / cardScale})`,
               transformOrigin: 'right center',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -238,3 +279,23 @@ export default function ReservationBlock({
     </div>
   );
 }
+
+// Memoize component - only re-render if props change
+export default memo(ReservationBlock, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these change
+  return (
+    prevProps.reservation.id === nextProps.reservation.id &&
+    prevProps.zoomLevel === nextProps.zoomLevel &&
+    prevProps.isOverlay === nextProps.isOverlay &&
+    prevProps.hasConflict === nextProps.hasConflict &&
+    // Check if reservation data changed
+    prevProps.reservation.status === nextProps.reservation.status &&
+    prevProps.reservation.priority === nextProps.reservation.priority &&
+    prevProps.reservation.startTime === nextProps.reservation.startTime &&
+    prevProps.reservation.durationMinutes ===
+      nextProps.reservation.durationMinutes &&
+    prevProps.reservation.customer.name ===
+      nextProps.reservation.customer.name &&
+    prevProps.reservation.partySize === nextProps.reservation.partySize
+  );
+});

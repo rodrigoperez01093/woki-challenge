@@ -180,7 +180,7 @@ export default function CreateReservationModal({
           <div className="fixed inset-0 bg-black/30" />
         </Transition.Child>
 
-        <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4">
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -190,8 +190,8 @@ export default function CreateReservationModal({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl text-black">
-              <Dialog.Title className="mb-4 text-2xl font-bold text-gray-900">
+            <Dialog.Panel className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 text-black shadow-xl md:p-6">
+              <Dialog.Title className="mb-3 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
                 Nueva Reserva
               </Dialog.Title>
 
@@ -235,8 +235,8 @@ export default function CreateReservationModal({
                 </div>
 
                 {/* Customer Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Nombre del cliente *
                     </label>
@@ -258,7 +258,7 @@ export default function CreateReservationModal({
                     )}
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Teléfono *
                     </label>
@@ -331,8 +331,8 @@ export default function CreateReservationModal({
                 </div>
 
                 {/* Time and Duration */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Hora
                     </label>
@@ -351,7 +351,7 @@ export default function CreateReservationModal({
                     />
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Minutos
                     </label>
@@ -372,7 +372,7 @@ export default function CreateReservationModal({
                     </select>
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Duración (min)
                     </label>
@@ -395,8 +395,8 @@ export default function CreateReservationModal({
                 </div>
 
                 {/* Status and Priority */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Estado
                     </label>
@@ -415,7 +415,7 @@ export default function CreateReservationModal({
                     </select>
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       Prioridad
                     </label>

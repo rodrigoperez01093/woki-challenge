@@ -10,7 +10,7 @@ import type { ReservationStatus } from '@/types';
  */
 export default function FilterControls() {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2 md:flex-row md:items-center">
       <SectorFilter />
       <StatusFilter />
       <SearchFilter />
@@ -39,10 +39,10 @@ function SectorFilter() {
   const selectedCount = filters.sectorIds.length;
 
   return (
-    <div className="relative">
+    <div className="relative w-full md:w-auto">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        className="flex w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 md:w-auto md:justify-start"
       >
         <span>Sectores</span>
         {selectedCount > 0 && (
@@ -59,7 +59,7 @@ function SectorFilter() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-md border border-gray-200 bg-white shadow-lg">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg md:w-64">
             <div className="max-h-64 overflow-y-auto p-2">
               {sectors.map((sector) => (
                 <label
@@ -118,10 +118,10 @@ function StatusFilter() {
   const selectedCount = filters.statuses.length;
 
   return (
-    <div className="relative">
+    <div className="relative w-full md:w-auto">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        className="flex w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 md:w-auto md:justify-start"
       >
         <span>Estados</span>
         {selectedCount > 0 && (
@@ -138,7 +138,7 @@ function StatusFilter() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-md border border-gray-200 bg-white shadow-lg">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg md:w-56">
             <div className="max-h-64 overflow-y-auto p-2">
               {statuses.map((status) => (
                 <label
@@ -187,7 +187,7 @@ function SearchFilter() {
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       placeholder="🔍 Buscar cliente..."
-      className="w-56 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 placeholder-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 placeholder-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 md:w-56"
     />
   );
 }
