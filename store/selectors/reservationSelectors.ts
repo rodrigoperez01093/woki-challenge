@@ -72,9 +72,9 @@ export function getFilteredReservations(
   filtered = filtered.filter((res) => {
     const resDate = new Date(res.startTime);
     return (
-      resDate.getFullYear() === selectedDate.getFullYear() &&
-      resDate.getMonth() === selectedDate.getMonth() &&
-      resDate.getDate() === selectedDate.getDate()
+      resDate.getUTCFullYear() === selectedDate.getUTCFullYear() &&
+      resDate.getUTCMonth() === selectedDate.getUTCMonth() &&
+      resDate.getUTCDate() === selectedDate.getUTCDate()
     );
   });
 

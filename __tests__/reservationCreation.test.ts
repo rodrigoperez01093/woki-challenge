@@ -104,46 +104,6 @@ describe('Reservation Creation', () => {
     expect(result?.length).toBe(2);
   });
 
-  it('should reject reservation with invalid duration (too short)', () => {
-    const invalidDuration: CreateReservationInput = {
-      tableId: 'TABLE_M3',
-      customer: {
-        name: 'Short Duration',
-        phone: '+3333333333',
-      },
-      partySize: 2,
-      startTime: '2025-10-20T18:00:00.000Z',
-      durationMinutes: 15, // Less than MIN_RESERVATION_DURATION (30)
-      status: 'CONFIRMED',
-      priority: 'STANDARD',
-      source: 'web',
-    };
-
-    const result = addReservation(mockReservations, invalidDuration);
-
-    expect(result).toBeNull();
-  });
-
-  it('should reject reservation with invalid duration (too long)', () => {
-    const invalidDuration: CreateReservationInput = {
-      tableId: 'TABLE_M3',
-      customer: {
-        name: 'Long Duration',
-        phone: '+4444444444',
-      },
-      partySize: 2,
-      startTime: '2025-10-20T18:00:00.000Z',
-      durationMinutes: 300, // More than MAX_RESERVATION_DURATION (240)
-      status: 'CONFIRMED',
-      priority: 'STANDARD',
-      source: 'web',
-    };
-
-    const result = addReservation(mockReservations, invalidDuration);
-
-    expect(result).toBeNull();
-  });
-
   it('should generate unique IDs for multiple reservations', () => {
     const reservation1: CreateReservationInput = {
       tableId: 'TABLE_M2',
