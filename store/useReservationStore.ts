@@ -316,9 +316,9 @@ export const useReservationStore = create<ReservationState>()(
         const reservationsOnDate = get().reservations.filter((res) => {
           const resDate = new Date(res.startTime);
           return (
-            resDate.getFullYear() === startDate.getFullYear() &&
-            resDate.getMonth() === startDate.getMonth() &&
-            resDate.getDate() === startDate.getDate()
+            resDate.getUTCFullYear() === startDate.getUTCFullYear() &&
+            resDate.getUTCMonth() === startDate.getUTCMonth() &&
+            resDate.getUTCDate() === startDate.getUTCDate()
           );
         });
 

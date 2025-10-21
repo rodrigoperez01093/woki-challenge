@@ -36,9 +36,9 @@ export function moveReservation(
   const reservationsOnDate = reservations.filter((res) => {
     const resDate = new Date(res.startTime);
     return (
-      resDate.getFullYear() === newStartDate.getFullYear() &&
-      resDate.getMonth() === newStartDate.getMonth() &&
-      resDate.getDate() === newStartDate.getDate()
+      resDate.getUTCFullYear() === newStartDate.getUTCFullYear() &&
+      resDate.getUTCMonth() === newStartDate.getUTCMonth() &&
+      resDate.getUTCDate() === newStartDate.getUTCDate()
     );
   });
 
@@ -106,9 +106,9 @@ export function resizeReservation(
   const reservationsOnDate = reservations.filter((res) => {
     const resDate = new Date(res.startTime);
     return (
-      resDate.getFullYear() === startDate.getFullYear() &&
-      resDate.getMonth() === startDate.getMonth() &&
-      resDate.getDate() === startDate.getDate()
+      resDate.getUTCFullYear() === startDate.getUTCFullYear() &&
+      resDate.getUTCMonth() === startDate.getUTCMonth() &&
+      resDate.getUTCDate() === startDate.getUTCDate()
     );
   });
 

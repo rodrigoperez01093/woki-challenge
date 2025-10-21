@@ -69,12 +69,13 @@ export function getFilteredReservations(
   let filtered = [...reservations];
 
   // Filter by selected date (same day)
+  // Use UTC methods to avoid timezone issues in tests
   filtered = filtered.filter((res) => {
     const resDate = new Date(res.startTime);
     return (
-      resDate.getFullYear() === selectedDate.getFullYear() &&
-      resDate.getMonth() === selectedDate.getMonth() &&
-      resDate.getDate() === selectedDate.getDate()
+      resDate.getUTCFullYear() === selectedDate.getUTCFullYear() &&
+      resDate.getUTCMonth() === selectedDate.getUTCMonth() &&
+      resDate.getUTCDate() === selectedDate.getUTCDate()
     );
   });
 
