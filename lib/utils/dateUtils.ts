@@ -24,6 +24,13 @@ import type { ISODateTime } from '@/types';
  */
 export function formatTime(date: Date | string): string {
   const d = typeof date === 'string' ? parseISO(date) : date;
+
+  // Validate the date object
+  if (!d || isNaN(d.getTime())) {
+    console.error('Invalid date provided to formatTime:', date);
+    return '--:--';
+  }
+
   return format(d, 'HH:mm');
 }
 

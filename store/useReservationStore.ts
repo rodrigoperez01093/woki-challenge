@@ -13,6 +13,7 @@ import {
   sectors as initialSectors,
   tables as initialTables,
   reservations as initialReservations,
+  generateRandomReservations,
 } from '@/lib/seed-data';
 
 // Actions
@@ -43,7 +44,6 @@ import {
 // Utils
 import { checkConflict as checkConflictUtil } from './utils/conflictDetection';
 import { ReservationState, FiltersState } from './types';
-import { parseISO } from 'date-fns';
 
 //#region Store
 export const useReservationStore = create<ReservationState>()(
@@ -57,7 +57,9 @@ export const useReservationStore = create<ReservationState>()(
       tables: initialTables,
       reservations: initialReservations,
 
-      selectedDate: parseISO('2025-10-15'),
+      // Use static date for SSR, will be updated on client mount
+      selectedDate:
+        typeof window === 'undefined' ? new Date('2025-01-20') : new Date(),
       viewMode: 'day',
       zoomLevel: 1,
       selectedReservationIds: [],
@@ -66,7 +68,12 @@ export const useReservationStore = create<ReservationState>()(
       filters: createEmptyFilters(),
 
       config: {
-        date: '2025-10-15',
+        // Generate date string - static for SSR
+        date: (() => {
+          const today =
+            typeof window === 'undefined' ? new Date('2025-01-20') : new Date();
+          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        })(),
         startHour: 11,
         endHour: 24,
         slotMinutes: 15,
@@ -205,6 +212,30 @@ export const useReservationStore = create<ReservationState>()(
 
       clearFilters: () => {
         set({ filters: createEmptyFilters() });
+      },
+
+      // ========================================================================
+      // Stress Test
+      // ========================================================================
+
+      loadStressTest: (count: number = 200) => {
+        const currentState = get();
+        const stressReservations = generateRandomReservations(
+          count,
+          currentState.selectedDate,
+          currentState.reservations // Pass existing reservations to avoid overlaps
+        );
+        set((state) => ({
+          reservations: [...state.reservations, ...stressReservations],
+        }));
+      },
+
+      clearStressTest: () => {
+        set((state) => ({
+          reservations: state.reservations.filter(
+            (r) => !r.id.startsWith('RES_GEN_')
+          ),
+        }));
       },
 
       // ========================================================================

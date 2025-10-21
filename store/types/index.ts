@@ -67,6 +67,10 @@ export interface ReservationState {
   setFilters: (filters: Partial<FiltersState>) => void;
   clearFilters: () => void;
 
+  // Actions - Stress Test
+  loadStressTest: (count?: number) => void;
+  clearStressTest: () => void;
+
   // Selectors
   getReservationById: (id: UUID) => Reservation | undefined;
   getReservationsByTable: (tableId: UUID) => Reservation[];

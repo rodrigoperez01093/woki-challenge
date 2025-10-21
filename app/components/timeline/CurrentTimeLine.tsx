@@ -22,8 +22,12 @@ export default function CurrentTimeLine({
   selectedDate,
 }: CurrentTimeLineProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
-  // eslint-disable-next-line
   const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true on mount (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Update current time every minute
   useEffect(() => {

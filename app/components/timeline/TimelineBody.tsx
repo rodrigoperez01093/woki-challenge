@@ -15,6 +15,7 @@ interface TimelineBodyProps {
 
 /**
  * Timeline body with table rows and reservation blocks
+ * Optimized with memoization for performance with 200+ reservations
  */
 export default function TimelineBody({
   zoomLevel,
@@ -36,7 +37,7 @@ export default function TimelineBody({
     (state) => state.getFilteredReservations
   );
 
-  // Memoizar el resultado
+  // Memoizar el resultado - esto evita re-filtrar en cada render
   const reservations = useMemo(
     () => getFilteredReservations(),
     [allReservations, filters, selectedDate, getFilteredReservations] // eslint-disable-line
