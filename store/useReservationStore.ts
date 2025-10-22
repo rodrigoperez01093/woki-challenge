@@ -63,9 +63,12 @@ export const useReservationStore = create<ReservationState>()(
       tables: initialTables,
       reservations: initialReservations,
 
-      // Use static date for SSR, will be updated on client mount
-      selectedDate:
-        typeof window === 'undefined' ? new Date('2025-01-20') : new Date(),
+      // Always use current date at midnight to avoid timezone issues
+      selectedDate: (() => {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        return date;
+      })(),
       viewMode: 'day',
       zoomLevel: 1,
       selectedReservationIds: [],
@@ -74,10 +77,10 @@ export const useReservationStore = create<ReservationState>()(
       filters: createEmptyFilters(),
 
       config: {
-        // Generate date string - static for SSR
+        // Generate date string - always use current date at midnight
         date: (() => {
-          const today =
-            typeof window === 'undefined' ? new Date('2025-01-20') : new Date();
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
           return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         })(),
         startHour: 11,
@@ -271,6 +274,14 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
+      // Batch Import
+      // ========================================================================
+
+      replaceAllReservations: (reservations) => {
+        set({ reservations });
+      },
+
+      // ========================================================================
       // Selectors
       // ========================================================================
 
@@ -316,9 +327,9 @@ export const useReservationStore = create<ReservationState>()(
         const reservationsOnDate = get().reservations.filter((res) => {
           const resDate = new Date(res.startTime);
           return (
-            resDate.getUTCFullYear() === startDate.getUTCFullYear() &&
-            resDate.getUTCMonth() === startDate.getUTCMonth() &&
-            resDate.getUTCDate() === startDate.getUTCDate()
+            resDate.getFullYear() === startDate.getFullYear() &&
+            resDate.getMonth() === startDate.getMonth() &&
+            resDate.getDate() === startDate.getDate()
           );
         });
 

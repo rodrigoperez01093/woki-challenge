@@ -13,6 +13,7 @@ import { getCurrentTime, isSameDay } from '@/lib/utils/dateUtils';
 interface CurrentTimeLineProps {
   selectedDate: Date;
   zoomLevel: number;
+  totalHeight?: number;
 }
 
 /**
@@ -22,6 +23,7 @@ interface CurrentTimeLineProps {
 export default function CurrentTimeLine({
   selectedDate,
   zoomLevel,
+  totalHeight,
 }: CurrentTimeLineProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
   const [isClient, setIsClient] = useState(false);
@@ -54,10 +56,11 @@ export default function CurrentTimeLine({
 
   return (
     <div
-      className="pointer-events-none absolute top-0 bottom-0"
+      className="pointer-events-none absolute top-0"
       style={{
         left: `${xPosition}px`,
         width: `${CURRENT_TIME_LINE_WIDTH}px`,
+        height: totalHeight ? `${totalHeight}px` : '100%',
         backgroundColor: CURRENT_TIME_COLOR,
         zIndex: Z_INDEX.CURRENT_TIME_LINE,
       }}

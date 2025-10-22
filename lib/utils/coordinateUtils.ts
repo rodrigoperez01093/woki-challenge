@@ -131,22 +131,27 @@ export function getTimeFromSlotIndex(
 
 /**
  * Checks if a position is within the timeline bounds
+ * Allows reservations to extend one slot beyond the visible grid
+ * to enable reservations ending at midnight (00:00)
  *
  * @param x - X position in pixels
  * @returns true if within bounds, false otherwise
  */
 export function isWithinTimelineBounds(x: number): boolean {
-  return x >= 0 && x <= TOTAL_SLOTS * SLOT_WIDTH;
+  // Allow one extra slot beyond TOTAL_SLOTS to permit reservations ending at 00:00
+  return x >= 0 && x <= (TOTAL_SLOTS + 1) * SLOT_WIDTH;
 }
 
 /**
  * Clamps a position to timeline bounds
+ * Allows reservations to extend one slot beyond the visible grid
  *
  * @param x - X position in pixels
  * @returns Clamped position
  */
 export function clampToTimelineBounds(x: number): number {
-  return Math.max(0, Math.min(x, TOTAL_SLOTS * SLOT_WIDTH));
+  // Allow one extra slot beyond TOTAL_SLOTS to permit reservations ending at 00:00
+  return Math.max(0, Math.min(x, (TOTAL_SLOTS + 1) * SLOT_WIDTH));
 }
 
 /**

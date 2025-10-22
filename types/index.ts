@@ -21,7 +21,12 @@ export type ReservationStatus =
 
 export type Priority = 'STANDARD' | 'VIP' | 'LARGE_GROUP';
 
-export type ReservationSource = 'phone' | 'web' | 'walkin' | 'app';
+export type ReservationSource =
+  | 'phone'
+  | 'web'
+  | 'walkin'
+  | 'app'
+  | 'BATCH_IMPORT';
 
 export type ViewMode = 'day' | '3-day' | 'week';
 

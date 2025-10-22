@@ -27,7 +27,9 @@ export default function DateNavigator() {
   };
 
   const goToToday = () => {
-    setSelectedDate(new Date());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setSelectedDate(today);
   };
 
   const isToday = isMounted

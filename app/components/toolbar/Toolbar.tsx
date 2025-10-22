@@ -6,12 +6,16 @@ import FilterControls from './FilterControls';
 import ZoomControls from './ZoomControls';
 import CreateReservationModal from '../modals/CreateReservationModal';
 import ConfirmModal from '../modals/ConfirmModal';
+import SectorComparisonModal from '../modals/SectorComparisonModal';
+import BatchSchedulingModal from '../modals/BatchSchedulingModal';
 import { useReservationStore } from '@/store/useReservationStore';
 
 export default function Toolbar() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSectorComparisonOpen, setIsSectorComparisonOpen] = useState(false);
+  const [isBatchSchedulingOpen, setIsBatchSchedulingOpen] = useState(false);
   const { loadStressTest, clearStressTest, reservations } =
     useReservationStore();
 
@@ -166,6 +170,30 @@ export default function Toolbar() {
                       </span>
                       {hasStressTestData ? 'Limpiar Test' : 'Stress Test'}
                     </button>
+
+                    {/* Sector Comparison Button */}
+                    <button
+                      onClick={() => {
+                        setIsSectorComparisonOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg bg-emerald-600 px-4 py-3 text-left font-medium text-white hover:bg-emerald-700 active:bg-emerald-800"
+                    >
+                      <span className="text-xl">📊</span>
+                      Análisis Sectores
+                    </button>
+
+                    {/* Batch Scheduling Button */}
+                    <button
+                      onClick={() => {
+                        setIsBatchSchedulingOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg bg-orange-600 px-4 py-3 text-left font-medium text-white hover:bg-orange-700 active:bg-orange-800"
+                    >
+                      <span className="text-xl">📥</span>
+                      Importar CSV
+                    </button>
                   </div>
                 </div>
 
@@ -219,6 +247,25 @@ export default function Toolbar() {
         >
           {hasStressTestData ? '🗑️ Clear Test' : '⚡ Stress Test'}
         </button>
+
+        {/* Sector Comparison Button */}
+        <button
+          title="Ver comparación de sectores"
+          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95"
+          onClick={() => setIsSectorComparisonOpen(true)}
+        >
+          📊 Sectores
+        </button>
+
+        {/* Batch Scheduling Button */}
+        <button
+          title="Importar reservas desde CSV"
+          className="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-700 hover:shadow-md active:scale-95"
+          onClick={() => setIsBatchSchedulingOpen(true)}
+        >
+          📥 Importar CSV
+        </button>
+
         <DateNavigator />
         <div className="h-6 w-px bg-gray-300" />
         <FilterControls />
@@ -229,6 +276,18 @@ export default function Toolbar() {
       <CreateReservationModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Sector Comparison Modal */}
+      <SectorComparisonModal
+        isOpen={isSectorComparisonOpen}
+        onClose={() => setIsSectorComparisonOpen(false)}
+      />
+
+      {/* Batch Scheduling Modal */}
+      <BatchSchedulingModal
+        isOpen={isBatchSchedulingOpen}
+        onClose={() => setIsBatchSchedulingOpen(false)}
       />
 
       {/* Stress Test Confirmation Modal */}

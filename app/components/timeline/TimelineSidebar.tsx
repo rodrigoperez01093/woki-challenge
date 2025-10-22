@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import { useReservationStore } from '@/store/useReservationStore';
 import { ROW_HEIGHT } from '@/lib/constants';
 import SectorGroup from './SectorGroup';
@@ -7,7 +8,7 @@ import SectorGroup from './SectorGroup';
 /**
  * Sidebar showing table list grouped by sectors
  */
-export default function TimelineSidebar() {
+const TimelineSidebar = forwardRef<HTMLDivElement>((props, ref) => {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
   const collapsedSectorIds = useReservationStore(
@@ -18,7 +19,10 @@ export default function TimelineSidebar() {
   );
 
   return (
-    <div className="w-[100px] shrink-0 overflow-y-auto border-r-2 border-gray-200 bg-gray-50 md:w-[220px]">
+    <div
+      ref={ref}
+      className="w-[100px] shrink-0 overflow-y-hidden border-r-2 border-gray-200 bg-gray-50 md:w-[220px]"
+    >
       {sectors.map((sector) => {
         const sectorTables = tables.filter((t) => t.sectorId === sector.id);
         const isCollapsed = collapsedSectorIds.includes(sector.id);
@@ -36,4 +40,8 @@ export default function TimelineSidebar() {
       })}
     </div>
   );
-}
+});
+
+TimelineSidebar.displayName = 'TimelineSidebar';
+
+export default TimelineSidebar;
