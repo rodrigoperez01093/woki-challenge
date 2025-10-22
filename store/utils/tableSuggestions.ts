@@ -107,9 +107,9 @@ export function findBestTables(
   const reservationsOnDate = reservations.filter((res) => {
     const resDate = new Date(res.startTime);
     return (
-      resDate.getUTCFullYear() === startDate.getUTCFullYear() &&
-      resDate.getUTCMonth() === startDate.getUTCMonth() &&
-      resDate.getUTCDate() === startDate.getUTCDate()
+      resDate.getFullYear() === startDate.getFullYear() &&
+      resDate.getMonth() === startDate.getMonth() &&
+      resDate.getDate() === startDate.getDate()
     );
   });
 

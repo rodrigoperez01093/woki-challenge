@@ -71,6 +71,9 @@ export interface ReservationState {
   loadStressTest: (count?: number) => void;
   clearStressTest: () => void;
 
+  // Actions - Batch Import
+  replaceAllReservations: (reservations: Reservation[]) => void;
+
   // Selectors
   getReservationById: (id: UUID) => Reservation | undefined;
   getReservationsByTable: (tableId: UUID) => Reservation[];

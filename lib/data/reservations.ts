@@ -8,9 +8,13 @@ const formatDateYYYYMMDD = (date: Date): string => {
 
 // Get dates for seed data
 const getDatesForSeed = () => {
+  // Create date at midnight local time to avoid timezone issues
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -21,19 +25,8 @@ const getDatesForSeed = () => {
   };
 };
 
-// For SSR consistency, use static dates initially
-const isServer = typeof window === 'undefined';
-const staticToday = new Date('2025-01-20');
-const staticYesterday = new Date('2025-01-19');
-const staticTomorrow = new Date('2025-01-21');
-
-const dates = isServer
-  ? {
-      today: formatDateYYYYMMDD(staticToday),
-      yesterday: formatDateYYYYMMDD(staticYesterday),
-      tomorrow: formatDateYYYYMMDD(staticTomorrow),
-    }
-  : getDatesForSeed();
+// Always use current date (dynamic dates)
+const dates = getDatesForSeed();
 
 // Use baseDate for backwards compatibility with existing reservation data
 const baseDate = dates.today;

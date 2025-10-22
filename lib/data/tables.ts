@@ -1,7 +1,7 @@
 import type { Table } from '@/types';
 
 export const tables: Table[] = [
-  //#region Main Hall - 10 tables
+  //#region Main Hall - 13 tables
   {
     id: 'TABLE_M1',
     sectorId: 'SECTOR_MAIN',
@@ -72,7 +72,28 @@ export const tables: Table[] = [
     capacity: { min: 4, max: 6 },
     sortOrder: 9,
   },
-  //region Terrace - 8 tables
+  {
+    id: 'TABLE_M11',
+    sectorId: 'SECTOR_MAIN',
+    name: 'M11',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 10,
+  },
+  {
+    id: 'TABLE_M12',
+    sectorId: 'SECTOR_MAIN',
+    name: 'M12',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 11,
+  },
+  {
+    id: 'TABLE_M13',
+    sectorId: 'SECTOR_MAIN',
+    name: 'M13',
+    capacity: { min: 2, max: 2 },
+    sortOrder: 12,
+  },
+  //#region Terrace - 10 tables
   {
     id: 'TABLE_T1',
     sectorId: 'SECTOR_TERRACE',
@@ -129,7 +150,21 @@ export const tables: Table[] = [
     capacity: { min: 4, max: 8 },
     sortOrder: 7,
   },
-  //#region Bar Area - 6 tables
+  {
+    id: 'TABLE_T9',
+    sectorId: 'SECTOR_TERRACE',
+    name: 'T9',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 8,
+  },
+  {
+    id: 'TABLE_T10',
+    sectorId: 'SECTOR_TERRACE',
+    name: 'T10',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 9,
+  },
+  //#region Bar Area - 8 tables
   {
     id: 'TABLE_B1',
     sectorId: 'SECTOR_BAR',
@@ -172,7 +207,21 @@ export const tables: Table[] = [
     capacity: { min: 2, max: 4 },
     sortOrder: 5,
   },
-  //#region VIP Room - 4 tables
+  {
+    id: 'TABLE_B7',
+    sectorId: 'SECTOR_BAR',
+    name: 'B7',
+    capacity: { min: 2, max: 2 },
+    sortOrder: 6,
+  },
+  {
+    id: 'TABLE_B8',
+    sectorId: 'SECTOR_BAR',
+    name: 'B8',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 7,
+  },
+  //#region VIP Room - 5 tables
   {
     id: 'TABLE_V1',
     sectorId: 'SECTOR_VIP',
@@ -201,7 +250,14 @@ export const tables: Table[] = [
     capacity: { min: 4, max: 6 },
     sortOrder: 3,
   },
-  //#region Garden - 5 tables
+  {
+    id: 'TABLE_V5',
+    sectorId: 'SECTOR_VIP',
+    name: 'V5',
+    capacity: { min: 4, max: 6 },
+    sortOrder: 4,
+  },
+  //#region Garden - 8 tables
   {
     id: 'TABLE_G1',
     sectorId: 'SECTOR_GARDEN',
@@ -236,5 +292,26 @@ export const tables: Table[] = [
     name: 'G5',
     capacity: { min: 6, max: 10 },
     sortOrder: 4,
+  },
+  {
+    id: 'TABLE_G6',
+    sectorId: 'SECTOR_GARDEN',
+    name: 'G6',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 5,
+  },
+  {
+    id: 'TABLE_G7',
+    sectorId: 'SECTOR_GARDEN',
+    name: 'G7',
+    capacity: { min: 2, max: 4 },
+    sortOrder: 6,
+  },
+  {
+    id: 'TABLE_G8',
+    sectorId: 'SECTOR_GARDEN',
+    name: 'G8',
+    capacity: { min: 4, max: 6 },
+    sortOrder: 7,
   },
 ];

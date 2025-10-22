@@ -12,6 +12,7 @@ interface TimelineBodyProps {
   onEditReservation?: (reservation: Reservation) => void;
   onContextMenu?: (reservation: Reservation, x: number, y: number) => void;
   onEmptySlotClick?: (tableId: string, clickTime: Date) => void;
+  onHeightChange?: (height: number) => void;
 }
 
 /**
@@ -24,6 +25,7 @@ export default function TimelineBody({
   onEditReservation,
   onContextMenu,
   onEmptySlotClick,
+  onHeightChange,
 }: TimelineBodyProps) {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
@@ -83,17 +85,36 @@ export default function TimelineBody({
     Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVERSCAN;
 
   // Flatten all visible tables with their positions
+  // Include sector headers to maintain alignment with sidebar
   const allTablesFlattened = useMemo(() => {
-    const result: Array<{ table: any; index: number; yOffset: number }> = []; // eslint-disable-line
+    const result: Array<{
+      type: 'sector' | 'table';
+      sector?: any; // eslint-disable-line
+      table?: any; // eslint-disable-line
+      index: number;
+      yOffset: number;
+      isCollapsed?: boolean;
+    }> = [];
     let currentIndex = 0;
 
     sectors.forEach((sector) => {
       const sectorTables = tables.filter((t) => t.sectorId === sector.id);
       const isCollapsed = collapsedSectorIds.includes(sector.id);
 
+      // Add sector header row
+      result.push({
+        type: 'sector',
+        sector,
+        index: currentIndex,
+        yOffset: currentIndex * ROW_HEIGHT,
+        isCollapsed,
+      });
+      currentIndex++;
+
       if (!isCollapsed) {
         sectorTables.forEach((table) => {
           result.push({
+            type: 'table',
             table,
             index: currentIndex,
             yOffset: currentIndex * ROW_HEIGHT,
@@ -111,6 +132,13 @@ export default function TimelineBody({
     ({ index }) => index >= startIndex && index <= endIndex
   );
 
+  // Notify parent of height changes
+  useEffect(() => {
+    if (onHeightChange) {
+      onHeightChange(totalHeight);
+    }
+  }, [totalHeight, onHeightChange]);
+
   return (
     <div
       style={{
@@ -121,7 +149,28 @@ export default function TimelineBody({
         position: 'relative',
       }}
     >
-      {visibleTables.map(({ table, yOffset }) => {
+      {visibleTables.map((item) => {
+        const { type, yOffset } = item;
+
+        if (type === 'sector') {
+          // Render empty sector header row (visual separator only)
+          return (
+            <div
+              key={`sector-${item.sector.id}`}
+              style={{
+                position: 'absolute',
+                top: `${yOffset}px`,
+                left: 0,
+                right: 0,
+                height: `${ROW_HEIGHT}px`,
+              }}
+              className="border-b border-gray-200 bg-gray-50"
+            />
+          );
+        }
+
+        // Render table row
+        const { table } = item;
         const tableReservations = reservations.filter(
           (r) => r.tableId === table.id
         );

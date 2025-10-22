@@ -20,6 +20,7 @@ import TimelineBody from './TimelineBody';
 import TimelineSidebar from './TimelineSidebar';
 import CurrentTimeLine from './CurrentTimeLine';
 import ReservationBlock from './ReservationBlock';
+import CapacityOverlay from './CapacityOverlay';
 import {
   HEADER_HEIGHT,
   ROW_HEIGHT,
@@ -42,7 +43,9 @@ import { useToast } from '@/app/hooks/useToast';
  */
 export default function Timeline() {
   const timeHeaderRef = useRef<HTMLDivElement>(null);
+  const capacityOverlayRef = useRef<HTMLDivElement>(null);
   const gridBodyRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const [activeReservation, setActiveReservation] =
     useState<Reservation | null>(null);
@@ -67,6 +70,7 @@ export default function Timeline() {
     tableId: string;
     startTime: Date;
   } | null>(null);
+  const [timelineBodyHeight, setTimelineBodyHeight] = useState<number>(0);
 
   // Store state
   const selectedDate = useReservationStore((state) => state.selectedDate);
@@ -94,15 +98,23 @@ export default function Timeline() {
     })
   );
 
-  // Sync horizontal scroll between header and body
+  // Sync horizontal scroll between header, overlay, and body
+  // Sync vertical scroll between sidebar and body
   useEffect(() => {
     const header = timeHeaderRef.current;
+    const overlay = capacityOverlayRef.current;
     const body = gridBodyRef.current;
+    const sidebar = sidebarRef.current;
 
-    if (!header || !body) return;
+    if (!header || !overlay || !body || !sidebar) return;
 
     const handleBodyScroll = () => {
+      // Sync horizontal scroll
       header.scrollLeft = body.scrollLeft;
+      overlay.scrollLeft = body.scrollLeft;
+
+      // Sync vertical scroll with sidebar
+      sidebar.scrollTop = body.scrollTop;
     };
 
     body.addEventListener('scroll', handleBodyScroll);
@@ -114,15 +126,48 @@ export default function Timeline() {
 
   useEffect(() => {
     // Reset scroll position when zoom changes
-    if (gridBodyRef.current && timeHeaderRef.current) {
+    if (
+      gridBodyRef.current &&
+      timeHeaderRef.current &&
+      capacityOverlayRef.current
+    ) {
       const scrollLeft = gridBodyRef.current.scrollLeft;
       timeHeaderRef.current.scrollLeft = scrollLeft;
+      capacityOverlayRef.current.scrollLeft = scrollLeft;
     }
   }, [zoomLevel]);
 
   // Handler for clicking on empty slot
   const handleEmptySlotClick = (tableId: string, clickTime: Date) => {
     setCreateReservationData({ tableId, startTime: clickTime });
+  };
+
+  // Handler for clicking on capacity bar
+  const handleCapacitySlotClick = (hour: number, minute: number) => {
+    if (!gridBodyRef.current) return;
+
+    // Calculate the X position for this time slot
+    const targetDate = new Date(selectedDate);
+    targetDate.setHours(hour, minute, 0, 0);
+
+    // Calculate pixel position
+    const baseDate = new Date(selectedDate);
+    baseDate.setHours(0, 0, 0, 0);
+    const targetX = timeToX(targetDate, baseDate) * zoomLevel;
+
+    // Scroll to position (centered if possible)
+    const containerWidth = gridBodyRef.current.clientWidth;
+    const scrollLeft = Math.max(0, targetX - containerWidth / 2);
+
+    gridBodyRef.current.scrollTo({
+      left: scrollLeft,
+      behavior: 'smooth',
+    });
+
+    // Also sync header scroll
+    if (timeHeaderRef.current) {
+      timeHeaderRef.current.scrollLeft = scrollLeft;
+    }
   };
 
   // Drag & Drop handlers
@@ -364,12 +409,19 @@ export default function Timeline() {
       const endDate = new Date(startDate);
       endDate.setMinutes(endDate.getMinutes() + resizePreviewDuration);
 
-      // Check if crossed midnight
+      // Check if ends after midnight (00:00)
+      // Allow ending exactly at midnight (00:00) but not beyond
+      const endHour = endDate.getHours();
+      const endMinute = endDate.getMinutes();
       const startDateOnly = new Date(startDate);
       startDateOnly.setHours(0, 0, 0, 0);
       const endDateOnly = new Date(endDate);
       endDateOnly.setHours(0, 0, 0, 0);
-      const exceedsClosing = startDateOnly.getTime() !== endDateOnly.getTime();
+
+      // If dates are different, check if it's exactly midnight (allowed) or beyond (not allowed)
+      const crossedMidnight = startDateOnly.getTime() !== endDateOnly.getTime();
+      const exceedsClosing =
+        crossedMidnight && !(endHour === 0 && endMinute === 0);
 
       // Check if starts before opening hour
       const beforeOpening = startDate.getHours() < START_HOUR;
@@ -507,11 +559,15 @@ export default function Timeline() {
     );
 
     // Check if reservation would exceed closing time (cross midnight)
+    // Allow ending exactly at midnight (00:00) but not beyond
     const exceedsClosing = (() => {
       const endTime = new Date(newStartTime);
       endTime.setMinutes(
         endTime.getMinutes() + activeReservation.durationMinutes
       );
+
+      const endHour = endTime.getHours();
+      const endMinute = endTime.getMinutes();
 
       // Check if crossed midnight
       const startDateOnly = new Date(newStartTime);
@@ -519,7 +575,9 @@ export default function Timeline() {
       const endDateOnly = new Date(endTime);
       endDateOnly.setHours(0, 0, 0, 0);
 
-      return startDateOnly.getTime() !== endDateOnly.getTime();
+      const crossedMidnight = startDateOnly.getTime() !== endDateOnly.getTime();
+      // Allow exactly midnight (00:00), reject anything beyond
+      return crossedMidnight && !(endHour === 0 && endMinute === 0);
     })();
 
     // Check if reservation starts before opening hour
@@ -598,10 +656,29 @@ export default function Timeline() {
           <TimelineHeader ref={timeHeaderRef} zoomLevel={zoomLevel} />
         </div>
 
+        {/* Capacity Analytics Overlay */}
+        <div className="flex border-b border-gray-200">
+          {/* Empty corner space above sidebar - responsive width */}
+          <div className="w-[100px] shrink-0 border-r-2 border-gray-200 bg-gray-50 md:w-[220px]">
+            <div className="flex h-full items-center justify-center px-2">
+              <span className="text-[10px] font-medium text-gray-600">
+                Ocupación
+              </span>
+            </div>
+          </div>
+
+          {/* Capacity overlay (scrollable horizontally, synced with body) */}
+          <CapacityOverlay
+            ref={capacityOverlayRef}
+            zoomLevel={zoomLevel}
+            onTimeSlotClick={handleCapacitySlotClick}
+          />
+        </div>
+
         {/* Body with sidebar and grid */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar with table list */}
-          <TimelineSidebar />
+          <TimelineSidebar ref={sidebarRef} />
 
           {/* Main grid area (scrollable) */}
           <div className="relative flex-1 overflow-auto" ref={gridBodyRef}>
@@ -613,10 +690,12 @@ export default function Timeline() {
                 setContextMenu({ reservation, x, y })
               }
               onEmptySlotClick={handleEmptySlotClick}
+              onHeightChange={setTimelineBodyHeight}
             />
             <CurrentTimeLine
               selectedDate={selectedDate}
               zoomLevel={zoomLevel}
+              totalHeight={timelineBodyHeight}
             />
           </div>
         </div>
