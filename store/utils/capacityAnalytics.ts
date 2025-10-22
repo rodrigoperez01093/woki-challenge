@@ -161,53 +161,6 @@ export function calculateCapacityByTimeSlot(
 }
 
 /**
- * Find peak occupancy periods
- *
- * @param slots - Array of time slot capacity data
- * @param threshold - Minimum occupancy rate to consider as peak (default: 80%)
- * @returns Array of peak slots sorted by occupancy rate (highest first)
- */
-export function findPeakOccupancySlots(
-  slots: TimeSlotCapacity[],
-  threshold: number = 80
-): TimeSlotCapacity[] {
-  return slots
-    .filter((slot) => slot.occupancyRate >= threshold)
-    .sort((a, b) => b.occupancyRate - a.occupancyRate);
-}
-
-/**
- * Calculate average occupancy rate for a time range
- *
- * @param slots - Array of time slot capacity data
- * @param startHour - Start hour (inclusive)
- * @param endHour - End hour (exclusive)
- * @returns Average occupancy rate for the time range
- */
-export function calculateAverageOccupancy(
-  slots: TimeSlotCapacity[],
-  startHour?: number,
-  endHour?: number
-): number {
-  let filteredSlots = slots;
-
-  if (startHour !== undefined && endHour !== undefined) {
-    filteredSlots = slots.filter(
-      (slot) => slot.hour >= startHour && slot.hour < endHour
-    );
-  }
-
-  if (filteredSlots.length === 0) return 0;
-
-  const totalOccupancy = filteredSlots.reduce(
-    (sum, slot) => sum + slot.occupancyRate,
-    0
-  );
-
-  return totalOccupancy / filteredSlots.length;
-}
-
-/**
  * Format time slot for display
  *
  * @param slot - Time slot capacity data

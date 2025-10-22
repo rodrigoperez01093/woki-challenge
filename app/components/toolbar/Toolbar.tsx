@@ -182,18 +182,6 @@ export default function Toolbar() {
                       <span className="text-xl">📊</span>
                       Análisis Sectores
                     </button>
-
-                    {/* Batch Scheduling Button */}
-                    <button
-                      onClick={() => {
-                        setIsBatchSchedulingOpen(true);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-lg bg-orange-600 px-4 py-3 text-left font-medium text-white hover:bg-orange-700 active:bg-orange-800"
-                    >
-                      <span className="text-xl">📥</span>
-                      Importar CSV
-                    </button>
                   </div>
                 </div>
 

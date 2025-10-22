@@ -114,7 +114,6 @@ export interface TimelineState {
   config: TimelineConfig;
   selectedDate: Date;
   zoomLevel: number; // 0.5, 0.75, 1, 1.25, 1.5
-  selectedReservationIds: UUID[];
   filters: {
     sectorIds: UUID[];
     statuses: ReservationStatus[];
@@ -195,24 +194,3 @@ export interface TimeSlot {
 // ============================================================================
 // Type Guards
 // ============================================================================
-
-export function isValidReservationStatus(
-  status: string
-): status is ReservationStatus {
-  return [
-    'PENDING',
-    'CONFIRMED',
-    'SEATED',
-    'FINISHED',
-    'NO_SHOW',
-    'CANCELLED',
-  ].includes(status);
-}
-
-export function isValidPriority(priority: string): priority is Priority {
-  return ['STANDARD', 'VIP', 'LARGE_GROUP'].includes(priority);
-}
-
-export function isValidViewMode(mode: string): mode is ViewMode {
-  return ['day', '3-day', 'week'].includes(mode);
-}

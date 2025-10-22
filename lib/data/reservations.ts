@@ -1,5 +1,6 @@
 import type { Reservation, Table } from '@/types';
 import { tables } from './tables';
+import { checkTimeOverlap } from '../utils/timeUtils';
 
 // Helper function to format date as YYYY-MM-DD
 const formatDateYYYYMMDD = (date: Date): string => {
@@ -880,20 +881,6 @@ export function generateRandomReservations(
   const result: Reservation[] = [];
   const allReservations = [...existingReservations];
 
-  // Helper to check if two reservations overlap
-  const hasOverlap = (
-    start1: string,
-    end1: string,
-    start2: string,
-    end2: string
-  ): boolean => {
-    const s1 = new Date(start1).getTime();
-    const e1 = new Date(end1).getTime();
-    const s2 = new Date(start2).getTime();
-    const e2 = new Date(end2).getTime();
-    return s1 < e2 && s2 < e1;
-  };
-
   // Helper to check if table is available
   const isTableAvailable = (
     tableId: string,
@@ -903,7 +890,7 @@ export function generateRandomReservations(
     return !allReservations.some(
       (res) =>
         res.tableId === tableId &&
-        hasOverlap(res.startTime, res.endTime, startTime, endTime)
+        checkTimeOverlap(res.startTime, res.endTime, startTime, endTime)
     );
   };
 
@@ -944,7 +931,7 @@ export function generateRandomReservations(
       minutes = slot.minutes[Math.floor(Math.random() * slot.minutes.length)];
     }
 
-    // Maximum 60 minutes duration
+    // Maximum 60 minutes duration to allow max reservations
     const duration = 60;
 
     const startTime = `${dateStr}T${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00-03:00`;

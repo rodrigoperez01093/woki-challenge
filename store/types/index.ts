@@ -6,10 +6,8 @@ import {
   Restaurant,
   Sector,
   Table,
-  TimelineConfig,
   UpdateReservationInput,
   UUID,
-  ViewMode,
 } from '@/types';
 
 /**
@@ -30,16 +28,11 @@ export interface ReservationState {
 
   // UI State
   selectedDate: Date;
-  viewMode: ViewMode;
   zoomLevel: number;
-  selectedReservationIds: UUID[];
   collapsedSectorIds: UUID[];
 
   // Filters
   filters: FiltersState;
-
-  // Timeline Config
-  config: TimelineConfig;
 
   // Actions - Data mutations
   addReservation: (input: CreateReservationInput) => boolean;
@@ -57,10 +50,7 @@ export interface ReservationState {
 
   // Actions - UI
   setSelectedDate: (date: Date) => void;
-  setViewMode: (mode: ViewMode) => void;
   setZoomLevel: (level: number) => void;
-  toggleReservationSelection: (id: UUID) => void;
-  clearSelection: () => void;
   toggleSectorCollapse: (sectorId: UUID) => void;
 
   // Actions - Filters
@@ -100,7 +90,4 @@ export interface ReservationState {
     durationMinutes: number,
     sectorPreference?: UUID
   ) => import('../utils/tableSuggestions').TimeSlotSuggestion[];
-
-  // Utilities
-  resetToSeedData: () => void;
 }

@@ -11,7 +11,6 @@ import {
 } from '@/lib/constants';
 import { timeToX, durationToWidth } from '@/lib/utils/coordinateUtils';
 import { formatTimeRange } from '@/lib/utils/dateUtils';
-import { useReservationStore } from '@/store/useReservationStore';
 import { memo, useMemo } from 'react';
 
 interface ReservationBlockProps {
@@ -31,10 +30,6 @@ function ReservationBlock({
   onEdit,
   onContextMenu,
 }: ReservationBlockProps) {
-  const selectedReservationIds = useReservationStore(
-    (state) => state.selectedReservationIds
-  );
-
   // Make it droppable too (for collision detection)
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: `reservation-drop-${reservation.id}`,
@@ -91,8 +86,6 @@ function ReservationBlock({
     setDraggableRef(node);
     setDroppableRef(node);
   };
-
-  const isSelected = selectedReservationIds.includes(reservation.id);
 
   // Memoize card scale calculation
   const cardScale = useMemo(() => {
@@ -189,11 +182,7 @@ function ReservationBlock({
           ? `${CSS.Translate.toString(transform)} scaleY(${cardScale})`
           : `scaleY(${cardScale})`,
         transformOrigin: 'left top',
-        zIndex: isDragging
-          ? Z_INDEX.RESERVATION_DRAGGING
-          : isSelected
-            ? Z_INDEX.RESERVATION_HOVER
-            : Z_INDEX.RESERVATION,
+        zIndex: isDragging ? Z_INDEX.RESERVATION_DRAGGING : Z_INDEX.RESERVATION,
         opacity: isDragging && !isOverlay ? 0 : 1,
         cursor: 'move',
       };
@@ -215,7 +204,6 @@ function ReservationBlock({
         flex flex-col gap-1 rounded-md p-2 shadow-sm transition-all duration-200
         ${statusColors.bg} ${statusColors.text}
         ${priorityStyles.border}
-        ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
         hover:shadow-lg hover:-translate-y-0.5
       `}
       onClick={() => onEdit?.(reservation)}
