@@ -74,12 +74,25 @@ export default function Timeline() {
 
   // Store state
   const selectedDate = useReservationStore((state) => state.selectedDate);
+  const setSelectedDate = useReservationStore((state) => state.setSelectedDate);
   const zoomLevel = useReservationStore((state) => state.zoomLevel);
   const moveReservation = useReservationStore((state) => state.moveReservation);
   const resizeReservation = useReservationStore(
     (state) => state.resizeReservation
   );
   const checkConflict = useReservationStore((state) => state.checkConflict);
+
+  // Initialize selectedDate to today on client mount to avoid hydration issues
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Only update if it's still the default date
+    if (
+      selectedDate.getTime() === new Date('2025-10-20T00:00:00.000Z').getTime()
+    ) {
+      setSelectedDate(today);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Configure drag sensors for both mouse and touch
   const sensors = useSensors(

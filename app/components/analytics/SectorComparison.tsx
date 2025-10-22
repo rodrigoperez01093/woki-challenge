@@ -164,12 +164,10 @@ export default function SectorComparison() {
         })}
       </div>
 
-      {/* Insights */}
       {sectorMetrics.length > 0 && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <h4 className="mb-2 flex items-center gap-2 font-semibold text-blue-900">
-            <span>💡</span>
-            Insights
+            Información
           </h4>
           <ul className="space-y-1 text-sm text-blue-800">
             {(() => {

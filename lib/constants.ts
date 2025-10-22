@@ -12,7 +12,6 @@ export const TOTAL_HOURS = END_HOUR - START_HOUR; // 13 hours
 // Total number of time slots (15-min increments)
 export const TOTAL_SLOTS = (TOTAL_HOURS * 60) / SLOT_DURATION; // 52 slots
 export const GRID_WIDTH = TOTAL_SLOTS * SLOT_WIDTH;
-export const RESERVATION_PADDING = 8;
 export const RESERVATION_VERTICAL_GAP = 8;
 
 // ============================================================================
@@ -72,16 +71,6 @@ export const STATUS_COLORS: Record<
   },
 };
 
-// Raw color values (hex) for status indicators
-export const STATUS_COLOR_VALUES: Record<ReservationStatus, string> = {
-  PENDING: '#fbbf24',
-  CONFIRMED: '#3b82f6',
-  SEATED: '#10b981',
-  FINISHED: '#9ca3af',
-  NO_SHOW: '#ef4444',
-  CANCELLED: '#d1d5db',
-};
-
 // ============================================================================
 //#region  Priority Styles
 // ============================================================================
@@ -110,26 +99,6 @@ export const PRIORITY_STYLES: Record<
 //region Zoom Levels
 // ============================================================================
 export const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5] as const;
-export const DEFAULT_ZOOM = 1;
-export const MIN_ZOOM = 0.5;
-export const MAX_ZOOM = 1.5;
-
-// ============================================================================
-//egion Animation Durations (in milliseconds)
-// ============================================================================
-export const ANIMATION_DURATION = {
-  FAST: 150,
-  NORMAL: 200,
-  SLOW: 300,
-} as const;
-
-// ============================================================================
-//egion Drag & Drop
-// ============================================================================
-// Snap threshold in pixels for snapping to time slots
-export const SNAP_THRESHOLD = SLOT_WIDTH / 2;
-// Minimum drag distance to trigger drag operation (in pixels)
-export const MIN_DRAG_DISTANCE = 5;
 
 // ============================================================================
 //#region Current Time Indicator
@@ -151,7 +120,6 @@ export const GRID_LINE_COLORS = {
 // ============================================================================
 //#region Sidebar
 // ============================================================================
-export const SIDEBAR_WIDTH = 220;
 export const HEADER_HEIGHT = 50;
 
 // ============================================================================
@@ -174,38 +142,6 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   VIP: 'VIP',
   LARGE_GROUP: 'Grupo Grande',
 };
-
-// ============================================================================
-//#region Date/Time Formats
-// ============================================================================
-export const TIME_FORMAT = 'HH:mm';
-export const DATE_FORMAT = 'dd MMM, yyyy';
-export const DATETIME_FORMAT = 'dd MMM, yyyy HH:mm';
-
-// ============================================================================
-//#region Keyboard Shortcuts
-// ============================================================================
-export const KEYBOARD_SHORTCUTS = {
-  DELETE: ['Delete', 'Backspace'],
-  COPY: ['c', 'C'],
-  PASTE: ['v', 'V'],
-  DUPLICATE: ['d', 'D'],
-  UNDO: ['z', 'Z'],
-  REDO: ['y', 'Y'],
-  SELECT_ALL: ['a', 'A'],
-  ESCAPE: ['Escape'],
-} as const;
-
-// ============================================================================
-//#region Validation Messages
-// ============================================================================
-export const VALIDATION_MESSAGES = {
-  CONFLICT: 'Esta reserva se superpone con otra existente',
-  INVALID_CAPACITY: 'El número de comensales excede la capacidad de la mesa',
-  INVALID_DURATION: 'La duración debe estar entre 30 minutos y 4 horas',
-  OUTSIDE_SERVICE_HOURS: 'La reserva está fuera del horario de servicio',
-  REQUIRED_FIELD: 'Este campo es obligatorio',
-} as const;
 
 // ============================================================================
 //#region z-index Layers

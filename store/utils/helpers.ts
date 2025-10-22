@@ -1,6 +1,6 @@
 import type { UUID } from '@/types';
 
-/**
+/*
  * Generates a unique ID for a new reservation
  * Format: RES_<timestamp>_<random>
  */
@@ -8,7 +8,7 @@ export function generateId(): UUID {
   return `RES_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/**
+/*
  * Calculates end time based on start time and duration
  * @param startTime - ISO datetime string
  * @param durationMinutes - Duration in minutes
@@ -23,14 +23,11 @@ export function calculateEndTime(
   return end.toISOString();
 }
 
-/**
- * Gets current timestamp as ISO string
- */
 export function getCurrentTimestamp(): string {
   return new Date().toISOString();
 }
 
-/**
+/*
  * Validates if duration is within allowed range
  * Min: 30 minutes, Max: 4 hours (240 minutes)
  */

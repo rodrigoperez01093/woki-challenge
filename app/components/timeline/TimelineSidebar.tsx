@@ -8,7 +8,7 @@ import SectorGroup from './SectorGroup';
 /**
  * Sidebar showing table list grouped by sectors
  */
-const TimelineSidebar = forwardRef<HTMLDivElement>((props, ref) => {
+const TimelineSidebar = forwardRef<HTMLDivElement>((_props, ref) => {
   const sectors = useReservationStore((state) => state.sectors);
   const tables = useReservationStore((state) => state.tables);
   const collapsedSectorIds = useReservationStore(

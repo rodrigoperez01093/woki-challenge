@@ -6,7 +6,6 @@ import type {
   CreateReservationInput,
   UpdateReservationInput,
   ConflictCheck,
-  ViewMode,
 } from '@/types';
 import {
   restaurant as initialRestaurant,
@@ -56,41 +55,23 @@ export const useReservationStore = create<ReservationState>()(
   devtools(
     (set, get) => ({
       // ========================================================================
-      // Initial State
+      //#region Initial State
       // ========================================================================
       restaurant: initialRestaurant,
       sectors: initialSectors,
       tables: initialTables,
       reservations: initialReservations,
 
-      // Always use current date at midnight to avoid timezone issues
-      selectedDate: (() => {
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        return date;
-      })(),
-      viewMode: 'day',
+      // Use a fixed date to avoid hydration mismatch
+      // Will be updated to current date on client mount
+      selectedDate: new Date('2025-10-20T00:00:00.000Z'),
       zoomLevel: 1,
-      selectedReservationIds: [],
       collapsedSectorIds: [],
 
       filters: createEmptyFilters(),
 
-      config: {
-        // Generate date string - always use current date at midnight
-        date: (() => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        })(),
-        startHour: 11,
-        endHour: 24,
-        slotMinutes: 15,
-        viewMode: 'day',
-      },
-
       // ========================================================================
-      // Data Mutations
+      //#region Data Mutations
       // ========================================================================
 
       addReservation: (input: CreateReservationInput): boolean => {
@@ -112,9 +93,6 @@ export const useReservationStore = create<ReservationState>()(
       deleteReservation: (id: UUID) => {
         set((state) => ({
           reservations: deleteReservationAction(state.reservations, id),
-          selectedReservationIds: state.selectedReservationIds.filter(
-            (selectedId) => selectedId !== id
-          ),
         }));
       },
 
@@ -129,7 +107,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Drag & Drop
+      //#region Drag & Drop
       // ========================================================================
 
       moveReservation: (
@@ -192,36 +170,15 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // UI Actions
+      //#region UI Actions
       // ========================================================================
 
       setSelectedDate: (date: Date) => {
         set({ selectedDate: date });
       },
 
-      setViewMode: (mode: ViewMode) => {
-        set({ viewMode: mode });
-      },
-
       setZoomLevel: (level: number) => {
         set({ zoomLevel: Math.max(0.5, Math.min(2, level)) });
-      },
-
-      toggleReservationSelection: (id: UUID) => {
-        set((state) => {
-          const isSelected = state.selectedReservationIds.includes(id);
-          return {
-            selectedReservationIds: isSelected
-              ? state.selectedReservationIds.filter(
-                  (selectedId) => selectedId !== id
-                )
-              : [...state.selectedReservationIds, id],
-          };
-        });
-      },
-
-      clearSelection: () => {
-        set({ selectedReservationIds: [] });
       },
 
       toggleSectorCollapse: (sectorId: UUID) => {
@@ -236,7 +193,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Filters
+      //#region Filters
       // ========================================================================
 
       setFilters: (filters: Partial<FiltersState>) => {
@@ -250,7 +207,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Stress Test
+      //#region Stress Test
       // ========================================================================
 
       loadStressTest: (count: number = 200) => {
@@ -274,7 +231,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Batch Import
+      //#region Batch Import
       // ========================================================================
 
       replaceAllReservations: (reservations) => {
@@ -282,7 +239,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Selectors
+      //#region Selectors
       // ========================================================================
 
       getReservationById: (id: UUID) => {
@@ -343,7 +300,7 @@ export const useReservationStore = create<ReservationState>()(
       },
 
       // ========================================================================
-      // Table Suggestions
+      //#region Table Suggestions
       // ========================================================================
 
       findBestTables: (
@@ -377,44 +334,10 @@ export const useReservationStore = create<ReservationState>()(
           sectorPreference
         );
       },
-
-      // ========================================================================
-      // Utilities
-      // ========================================================================
-
-      resetToSeedData: () => {
-        set({
-          restaurant: initialRestaurant,
-          sectors: initialSectors,
-          tables: initialTables,
-          reservations: initialReservations,
-          selectedReservationIds: [],
-          collapsedSectorIds: [],
-          filters: createEmptyFilters(),
-        });
-      },
     }),
     { name: 'ReservationStore' }
   )
 );
-
-//#region Selector Hooks (for optimized re-renders)
-export const useReservations = () =>
-  useReservationStore((state) => state.reservations);
-
-export const useTables = () => useReservationStore((state) => state.tables);
-
-export const useSectors = () => useReservationStore((state) => state.sectors);
-
-export const useFilteredReservations = () =>
-  useReservationStore((state) => state.getFilteredReservations());
-
-export const useSelectedReservations = () =>
-  useReservationStore((state) =>
-    state.reservations.filter((res) =>
-      state.selectedReservationIds.includes(res.id)
-    )
-  );
 
 // Export types for table suggestions
 export type {

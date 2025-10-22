@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  checkConflict,
-  checkTimeOverlap,
-} from '@/store/utils/conflictDetection';
+import { checkConflict } from '@/store/utils/conflictDetection';
+import { checkTimeOverlap } from '@/lib/utils/timeUtils';
 import type { Reservation } from '@/types';
 
 describe('Conflict Detection', () => {

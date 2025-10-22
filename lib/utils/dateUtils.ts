@@ -1,15 +1,4 @@
-import {
-  format,
-  parseISO,
-  addMinutes as dateFnsAddMinutes,
-  differenceInMinutes,
-  isSameDay as dateFnsIsSameDay,
-  startOfDay,
-  endOfDay,
-  isWithinInterval,
-  addDays,
-  subDays,
-} from 'date-fns';
+import { format, parseISO, isSameDay as dateFnsIsSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { ISODateTime } from '@/types';
 
@@ -77,54 +66,12 @@ export function formatDateShort(date: Date | string): string {
 }
 
 /**
- * Formats a date to datetime string
- *
- * @param date - Date object or ISO string
- * @returns Formatted datetime string
- *
- * @example
- * formatDateTime(new Date('2025-10-15T20:30:00')) // Returns "15 Oct, 2025 20:30"
- */
-export function formatDateTime(date: Date | string): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'dd MMM, yyyy HH:mm', { locale: es });
-}
-
-/**
- * Parses an ISO datetime string to Date object
- *
- * @param isoString - ISO datetime string
- * @returns Date object
- *
- * @example
- * parseISODateTime("2025-10-15T20:00:00-03:00") // Returns Date object
- */
-export function parseISODateTime(isoString: ISODateTime): Date {
-  return parseISO(isoString);
-}
-
-/**
  * Gets the current time
  *
  * @returns Current Date object
  */
 export function getCurrentTime(): Date {
   return new Date();
-}
-
-/**
- * Adds minutes to a date
- *
- * @param date - Date object or ISO string
- * @param minutes - Minutes to add
- * @returns New Date object
- *
- * @example
- * addMinutes(new Date('2025-10-15T20:00:00'), 90) // Returns Date for 21:30
- */
-export function addMinutes(date: Date | string, minutes: number): Date {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return dateFnsAddMinutes(d, minutes);
 }
 
 /**
@@ -138,77 +85,6 @@ export function isSameDay(date1: Date | string, date2: Date | string): boolean {
   const d1 = typeof date1 === 'string' ? parseISO(date1) : date1;
   const d2 = typeof date2 === 'string' ? parseISO(date2) : date2;
   return dateFnsIsSameDay(d1, d2);
-}
-
-/**
- * Gets the difference in minutes between two dates
- *
- * @param start - Start date
- * @param end - End date
- * @returns Difference in minutes
- *
- * @example
- * getMinutesBetween(new Date('2025-10-15T20:00:00'), new Date('2025-10-15T21:30:00'))
- * // Returns 90
- */
-export function getMinutesBetween(
-  start: Date | string,
-  end: Date | string
-): number {
-  const s = typeof start === 'string' ? parseISO(start) : start;
-  const e = typeof end === 'string' ? parseISO(end) : end;
-  return differenceInMinutes(e, s);
-}
-
-/**
- * Gets start of day
- *
- * @param date - Date object
- * @returns Date at 00:00:00
- */
-export function getStartOfDay(date: Date): Date {
-  return startOfDay(date);
-}
-
-/**
- * Gets end of day
- *
- * @param date - Date object
- * @returns Date at 23:59:59
- */
-export function getEndOfDay(date: Date): Date {
-  return endOfDay(date);
-}
-
-/**
- * Checks if a time is within a time range
- *
- * @param time - Time to check
- * @param start - Range start
- * @param end - Range end
- * @returns true if within range, false otherwise
- */
-export function isTimeWithinRange(
-  time: Date | string,
-  start: Date | string,
-  end: Date | string
-): boolean {
-  const t = typeof time === 'string' ? parseISO(time) : time;
-  const s = typeof start === 'string' ? parseISO(start) : start;
-  const e = typeof end === 'string' ? parseISO(end) : end;
-
-  return isWithinInterval(t, { start: s, end: e });
-}
-
-/**
- * Adds days to a date
- *
- * @param date - Date object
- * @param days - Days to add (can be negative)
- * @returns New Date object
- */
-export function addDaysToDate(date: Date, days: number): Date {
-  return days >= 0 ? addDays(date, days) : subDays(date, Math.abs(days));
 }
 
 /**
@@ -227,21 +103,6 @@ export function formatTimeRange(
   end: Date | string
 ): string {
   return `${formatTime(start)} - ${formatTime(end)}`;
-}
-
-/**
- * Converts ISO datetime to ISO date string (YYYY-MM-DD)
- *
- * @param isoDateTime - ISO datetime string
- * @returns ISO date string
- *
- * @example
- * toISODateString("2025-10-15T20:00:00-03:00") // Returns "2025-10-15"
- */
-export function toISODateString(isoDateTime: ISODateTime | Date): string {
-  const date =
-    typeof isoDateTime === 'string' ? parseISO(isoDateTime) : isoDateTime;
-  return format(date, 'yyyy-MM-dd');
 }
 
 /**
